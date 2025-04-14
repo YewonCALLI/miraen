@@ -148,7 +148,8 @@ const offset = new Vector3(0, -0.01, 0)
               color="black"
               anchorX="center"
               anchorY="middle"
-              depthTest={false}
+              material-toneMapped={false}
+              material-depthTest={false}
             >
               {getBalloonText(true)}
             </Text>
@@ -166,10 +167,12 @@ const offset = new Vector3(0, -0.01, 0)
               color="black"
               anchorX="center"
               anchorY="middle"
-              depthTest={false}
+              material-toneMapped={false}
+              material-depthTest={false}
             >
-              {getBalloonText(false)}
+              {getBalloonText(true)}
             </Text>
+
             <line ref={lineRefB}>
               <bufferGeometry />
               <lineBasicMaterial color="black" />
