@@ -339,7 +339,7 @@ export function HumanModel({
   rotation = [0, Math.PI, 0] 
 }: HumanModelProps) {
   const modelRef = useRef<THREE.Group>(null);
-  const { scene } = useGLTF('/models/Figure.gltf');
+  const { scene } = useGLTF('/models/earth/Figure.gltf');
   const model = useMemo(() => scene.clone(), [scene]);
   
   useEffect(() => {
@@ -364,7 +364,7 @@ export function HumanModel({
 export function LargeSphere({ position, visible }: LargeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const opacityRef = useRef(0);
-  const sunTexture = useTexture('/models/sky.png');
+  const sunTexture = useTexture('/models/earth/sky.png');
   
   useFrame(() => {
     if (!meshRef.current || !meshRef.current.material) return;

@@ -72,8 +72,8 @@ export default function Page(props: PageProps) {
 
   useEffect(() => {
     [
-      '/models/sky.jpg',
-      '/models/sun_texture.jpeg',
+      '/models/earth/sky.png',
+      '/models/earth/sun_texture.jpeg',
       '/earth_Earth_AlbedoTransparency.png',
       '/earth_Earth_Normal.png',
       '/earth_Earth_SpecularSmoothness.png',
@@ -86,8 +86,8 @@ export default function Page(props: PageProps) {
       }
     });
     
-    useGLTF.preload('/models/earth.gltf');
-    useGLTF.preload('/models/Figure.gltf');
+    useGLTF.preload('/models/earth/earth.gltf');
+    useGLTF.preload('/models/earth/Figure.gltf');
   }, []);
 
   const handleSphereClick = useCallback((position: [number, number, number]) => {
@@ -223,7 +223,7 @@ export default function Page(props: PageProps) {
               position={isEarthOrbiting ? [4.9, 0, 0] : (earthPosition[0] === 5 ? earthPosition : [5, 0, 0])}
               isOrbiting={isEarthOrbiting}
               speed={0.6}
-              modelPath="/models/earth.gltf"
+              modelPath="/models/earth/earth.gltf"
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['5,0,0']}
             />
@@ -234,7 +234,7 @@ export default function Page(props: PageProps) {
               position={isEarthOrbiting ? [-5, 0, 0] : (earthPosition[0] === -5 ? earthPosition : [-5, 0, 0])}
               isOrbiting={isEarthOrbiting}
               speed={0.6}
-              modelPath="/models/earth.gltf"
+              modelPath="/models/earth/earth.gltf"
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['-5,0,0']}
             />
@@ -245,7 +245,7 @@ export default function Page(props: PageProps) {
               position={isEarthOrbiting ? [0, 0, 5] : (earthPosition[2] === 5 ? earthPosition : [0, 0, 5])}
               isOrbiting={isEarthOrbiting}
               speed={0.6}
-              modelPath="/models/earth.gltf"
+              modelPath="/models/earth/earth.gltf"
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['0,0,5']}
             />
@@ -256,7 +256,7 @@ export default function Page(props: PageProps) {
               position={isEarthOrbiting ? [0, 0, -5] : (earthPosition[2] === -5 ? earthPosition : [0, 0, -5])}
               isOrbiting={isEarthOrbiting}
               speed={0.6}
-              modelPath="/models/earth.gltf"
+              modelPath="/models/earth/earth.gltf"
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['0,0,-5']}
             />
