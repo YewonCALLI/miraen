@@ -41,7 +41,7 @@ const offset = new Vector3(0, -0.01, 0)
     if (!action) return
 
     action.reset()
-    action.setLoop(THREE.LoopOnce, 1)
+    action.setLoop(THREE.LoopRepeat, Infinity)
     action.clampWhenFinished = true
 
     const halfDuration = clip.duration / 2
