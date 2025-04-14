@@ -1,124 +1,198 @@
-import Scene from '@/components/canvas/Scene'
-import { OrbitControls, Sphere } from '@react-three/drei'
-import { useRouter } from 'next/router'
-import { useState, useRef, useMemo, useCallback, useEffect } from 'react'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
-import { Perf } from 'r3f-perf'
+import Scene from '@/components/canvas/Scene';
+import { OrbitControls } from '@react-three/drei';
+import { useRouter } from 'next/router';
+import { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
+import { Perf } from 'r3f-perf';
+import { useGLTF } from '@react-three/drei';
+import { 
+  Stars, 
+  DashedSphere, 
+  Sun, 
+  Earth, 
+  HumanModel, 
+  LargeSphere,
+  getHumanPositionOffset,
+  useGLTFWithCache,
+  useTexture 
+} from './components';
+import { PageProps, EarthVisibilityState } from './types';
+import CameraController from './cameraController';
 
-function DashedSphere({ position = [0, 0, 0], size = 0.1, color = "#000000", dashSize = 0.2, gapSize = 0.1, onClick }) {
-  const groupRef = useRef()
-  const [isHovered, setIsHovered] = useState(false)
-  const currentColor = isHovered ? "#FF0000" : color
+// 텍스처 미리 캐싱
+const textureLoader = new THREE.TextureLoader();
+const textureCache: { [key: string]: THREE.Texture } = {};
+
+export default function Page(props: PageProps) {
+  const router = useRouter();
+  const [isHovered, setIsHovered] = useState(false);
+  const [active, setActive] = useState(false);
+  const [earthPosition, setEarthPosition] = useState<[number, number, number]>([5, 0, 0]);
+  const [isEarthOrbiting, setIsEarthOrbiting] = useState(true);
+  const [shouldEarthRotate, setShouldEarthRotate] = useState(true);
   
-  // Hover Effect 
+  const [targetSpherePosition, setTargetSpherePosition] = useState<[number, number, number] | null>(null);
+  const [isCameraMoving, setIsCameraMoving] = useState(false);
+  const [cameraAnimationComplete, setCameraAnimationComplete] = useState(false);
+  const [isCameraReset, setIsCameraReset] = useState(false);
+  
+  const [activeSpherePosition, setActiveSpherePosition] = useState<[number, number, number] | null>(null);
+  const [isLargeSphereVisible, setIsLargeSphereVisible] = useState(false);
+  const [isHumanModelVisible, setIsHumanModelVisible] = useState(false);
+  const [isSunVisible, setIsSunVisible] = useState(true);
+  
+  const [visibleEarths, setVisibleEarths] = useState<EarthVisibilityState>({
+    '5,0,0': true,
+    '-5,0,0': true,
+    '0,0,5': true,
+    '0,0,-5': true
+  });
+
+  const [visibleDashedSpheres, setVisibleDashedSpheres] = useState<{[key: string]: boolean}>({
+    '5,0,0': true,
+    '-5,0,0': true,
+    '0,0,5': true,
+    '0,0,-5': true
+  });
+
+  const sphereSize = 0.5;
+  
+  const getHumanPosition = useCallback((targetPosition: [number, number, number] | null): [number, number, number] => {
+    if (!targetPosition) return [0, 0, 0];
+    
+    const [offsetX, offsetY, offsetZ] = getHumanPositionOffset(targetPosition);
+    
+    return [
+      targetPosition[0] + offsetX,
+      targetPosition[1] + offsetY,
+      targetPosition[2] + offsetZ
+    ];
+  }, []);
+
   useEffect(() => {
-    document.body.style.cursor = isHovered ? 'pointer' : 'auto'
-    return () => { document.body.style.cursor = 'auto' }
-  }, [isHovered])
-  
-  const dashedCircles = useMemo(() => {
-    const circles = []
-    const segments = 32
-    const material = new THREE.LineDashedMaterial({
-      color: currentColor,
-      dashSize: dashSize,
-      gapSize: gapSize,
-      transparent: true,
-    })
-
-    const curve = new THREE.EllipseCurve(
-      0, 0, size, size, 0, 2 * Math.PI, false, 0  
-    )
+    [
+      '/models/sky.jpg',
+      '/models/sun_texture.jpeg',
+      '/earth_Earth_AlbedoTransparency.png',
+      '/earth_Earth_Normal.png',
+      '/earth_Earth_SpecularSmoothness.png',
+      '/earth_Earth_Emission.png',
+      '/earth_Cloud_AlbedoTransparency.png',
+      '/earth_Cloud_SpecularSmoothness.png'
+    ].forEach(path => {
+      if (!textureCache[path]) {
+        textureCache[path] = textureLoader.load(path);
+      }
+    });
     
-    const points = curve.getPoints(segments)
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
+    useGLTF.preload('/models/earth.gltf');
+    useGLTF.preload('/models/Figure.gltf');
+  }, []);
+
+  const handleSphereClick = useCallback((position: [number, number, number]) => {
+    const resetAndPrepareAnimation = () => {
+      setIsSunVisible(false);
+      
+      const newVisibleEarths: EarthVisibilityState = {
+        '5,0,0': false,
+        '-5,0,0': false,
+        '0,0,5': false,
+        '0,0,-5': false
+      };
+      const posKey = position.join(',');
+      newVisibleEarths[posKey] = true;
+      setVisibleEarths(newVisibleEarths);
+      
+      // 모든 대시 구체 숨기기
+      setVisibleDashedSpheres({
+        '5,0,0': false,
+        '-5,0,0': false,
+        '0,0,5': false,
+        '0,0,-5': false
+      });
+      
+      setIsLargeSphereVisible(false);
+      setIsHumanModelVisible(false);
+      setIsCameraMoving(false);
+      setCameraAnimationComplete(false);
+      
+      setIsEarthOrbiting(false);
+      setEarthPosition(position);
+      
+      setActiveSpherePosition(position);
+      
+      setIsCameraReset(true);
+      setTargetSpherePosition(null);
+      
+      setTimeout(() => {
+        setIsCameraReset(false);
+        setTargetSpherePosition(position);
+        setTimeout(() => {
+          setIsCameraMoving(true);
+        }, 20);
+      });
+    };
     
-    const circle = new THREE.Line(geometry, material.clone())
-    circle.computeLineDistances()
-    circles.push(circle)
-    
-    return circles
-  }, [size, currentColor, dashSize, gapSize])
-
-  return (
-    <group 
-      ref={groupRef}
-      position={position} 
-      onClick={onClick}
-      onPointerOver={() => setIsHovered(true)}
-      onPointerOut={() => setIsHovered(false)}
-      raycast={(raycaster, intersects) => {
-        const worldPosition = new THREE.Vector3()
-        groupRef.current.getWorldPosition(worldPosition)
-        
-        const rayDirection = new THREE.Vector3()
-        rayDirection.subVectors(worldPosition, raycaster.ray.origin).normalize()
-        
-        const rayPointAtDistance = new THREE.Vector3()
-        rayPointAtDistance.copy(raycaster.ray.origin)
-          .add(rayDirection.multiplyScalar(raycaster.near))
-        
-        const distanceToRay = worldPosition.distanceTo(rayPointAtDistance)
-        
-        if (distanceToRay <= size * 1.0) {
-          intersects.push({
-            distance: worldPosition.distanceTo(raycaster.ray.origin),
-            object: groupRef.current,
-            point: new THREE.Vector3().copy(worldPosition)
-          })
-        }
-      }}
-    >
-      {dashedCircles.map((circle, index) => (
-        <primitive key={index} object={circle} />
-      ))}
-    </group>
-  )
-}
-
-function Earth({ position = [0, 0, 0], size = 0.5, isOrbiting = true, speed = 0.5 }) {
-  const earthRef = useRef()
+    // 리셋 및 애니메이션 준비 실행
+    resetAndPrepareAnimation();
+  }, []);
   
-  useFrame((state) => {
-    if (earthRef.current && isOrbiting) {
-      const time = state.clock.getElapsedTime()
-      earthRef.current.position.x = Math.cos(time * speed) * 5
-      earthRef.current.position.z = -Math.sin(time * speed) * 5 //반시계 방향
-    }
-  })
-
-  return (
-    <Sphere
-      ref={earthRef}
-      args={[size, 32, 32]}
-      position={position}>
-      <meshStandardMaterial color="green" />
-    </Sphere>
-  )
-}
-
-export default function Page(props) {
-  const router = useRouter()
-  const [isHovered, setIsHovered] = useState(false)
-  const [active, setActive] = useState(false)
-  const [earthPosition, setEarthPosition] = useState([5, 0, 0])
-  const [isEarthOrbiting, setIsEarthOrbiting] = useState(true)
-  
-  const handleSphereClick = useCallback((position) => {
-    setEarthPosition(position)
-    setIsEarthOrbiting(false)
-  }, [])
-  
+  // handleSunClick 함수 수정
   const handleSunClick = useCallback(() => {
-    setActive(!active)
-    setIsEarthOrbiting(true)
-  }, [active])
+    setActive(prev => !prev);
+    
+    const resetToMainView = () => {
+      setIsLargeSphereVisible(false);
+      setIsHumanModelVisible(false);
+      setIsCameraMoving(false);
+      setCameraAnimationComplete(false);
+      setActiveSpherePosition(null);
+      
+      setIsCameraReset(true);
+      setTargetSpherePosition(null);
+      
+      setTimeout(() => {
+        setIsCameraReset(false);
+        
+        setVisibleEarths({
+          '5,0,0': true,
+          '-5,0,0': true,
+          '0,0,5': true,
+          '0,0,-5': true
+        });
+        
+        // 모든 대시 구체 다시 보이게 설정
+        setVisibleDashedSpheres({
+          '5,0,0': true,
+          '-5,0,0': true,
+          '0,0,5': true,
+          '0,0,-5': true
+        });
+        
+        setIsEarthOrbiting(true);
+        setShouldEarthRotate(true);
+        setIsSunVisible(true);
+      }, 200);
+    };
+    
+    requestAnimationFrame(resetToMainView);
+  }, []);
+  
+
+  const handleCameraAnimationComplete = useCallback(() => {
+    setCameraAnimationComplete(true);
+    setShouldEarthRotate(false);
+    setIsSunVisible(false); // 카메라 이동 완료시 태양 숨기기
+  
+    setIsLargeSphereVisible(true);
+    setIsHumanModelVisible(true);
+  }, []);
 
   useEffect(() => {
-    document.body.style.cursor = isHovered ? 'pointer' : 'auto'
-    return () => { document.body.style.cursor = 'auto' }
-  }, [isHovered])
+    document.body.style.cursor = isHovered ? 'pointer' : 'auto';
+    return () => { document.body.style.cursor = 'auto' };
+  }, [isHovered]);
 
   return (
     <>
@@ -128,60 +202,126 @@ export default function Page(props) {
         미래엔
       </button>
 
-      <div className='fixed z-0 w-full h-screen'>
-        <Scene camera={{position: [0, 5, 8]}}>
-          <Perf />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[0, 0, 0]} />
+      <div className='fixed z-0 w-full h-screen bg-black'>
+        <Scene camera={{position: [0, 5, 8], fov: 75}}>
+          {process.env.NODE_ENV === 'development' && <Perf />}
           
-          <Sphere
+          <Stars count={2000} size={0.1} />
+          <ambientLight intensity={0.5} />
+          <pointLight position={[0, 0, 0]} intensity={2} />
+          
+          <Sun
+            onClick={handleSunClick}
             onPointerOver={() => setIsHovered(true)}
             onPointerOut={() => setIsHovered(false)}
-            onClick={handleSunClick}
-            args={[1, 32, 32]}
-            position={[0, 0, 0]}>
-            <meshStandardMaterial 
-              color={isHovered ? 'hotpink' : 'orange'} 
-              emissive="orange" 
-              emissiveIntensity={0.5} 
+            visible={isSunVisible}
+          />
+          
+          {/* 4개의 지구 위치 */}
+          {visibleEarths['5,0,0'] && (
+            <Earth 
+              position={isEarthOrbiting ? [4.9, 0, 0] : (earthPosition[0] === 5 ? earthPosition : [5, 0, 0])}
+              isOrbiting={isEarthOrbiting}
+              speed={0.6}
+              modelPath="/models/earth.gltf"
+              shouldRotate={shouldEarthRotate}
+              visible={visibleEarths['5,0,0']}
             />
-          </Sphere>
+          )}
           
-          <Earth 
-            position={isEarthOrbiting ? [4.9, 0, 0] : earthPosition}
-            size={0.4}
-            isOrbiting={isEarthOrbiting}
-            speed={0.5}
-          />
+          {visibleEarths['-5,0,0'] && (
+            <Earth 
+              position={isEarthOrbiting ? [-5, 0, 0] : (earthPosition[0] === -5 ? earthPosition : [-5, 0, 0])}
+              isOrbiting={isEarthOrbiting}
+              speed={0.6}
+              modelPath="/models/earth.gltf"
+              shouldRotate={shouldEarthRotate}
+              visible={visibleEarths['-5,0,0']}
+            />
+          )}
           
-          <DashedSphere 
-            position={[5, 0, 0]} 
-            size={0.5} 
-            onClick={() => handleSphereClick([5, 0, 0])} 
-          />
-          <DashedSphere 
-            position={[-5, 0, 0]} 
-            size={0.5} 
-            onClick={() => handleSphereClick([-5, 0, 0])} 
-          />
-          <DashedSphere 
-            position={[0, 0, 5]} 
-            size={0.5} 
-            onClick={() => handleSphereClick([0, 0, 5])} 
-          />
-          <DashedSphere 
-            position={[0, 0, -5]} 
-            size={0.5} 
-            onClick={() => handleSphereClick([0, 0, -5])} 
-          />
+          {visibleEarths['0,0,5'] && (
+            <Earth 
+              position={isEarthOrbiting ? [0, 0, 5] : (earthPosition[2] === 5 ? earthPosition : [0, 0, 5])}
+              isOrbiting={isEarthOrbiting}
+              speed={0.6}
+              modelPath="/models/earth.gltf"
+              shouldRotate={shouldEarthRotate}
+              visible={visibleEarths['0,0,5']}
+            />
+          )}
           
-          <OrbitControls enablePan={true} enableZoom={true} enableRotate={true} minDistance={0} maxDistance={100} />
+          {visibleEarths['0,0,-5'] && (
+            <Earth 
+              position={isEarthOrbiting ? [0, 0, -5] : (earthPosition[2] === -5 ? earthPosition : [0, 0, -5])}
+              isOrbiting={isEarthOrbiting}
+              speed={0.6}
+              modelPath="/models/earth.gltf"
+              shouldRotate={shouldEarthRotate}
+              visible={visibleEarths['0,0,-5']}
+            />
+          )}
+          
+          {useMemo(() => (
+          <>
+            <DashedSphere 
+              position={[5, 0, 0]} 
+              size={sphereSize} 
+              onClick={() => handleSphereClick([5, 0, 0])}
+              visible={visibleDashedSpheres['5,0,0']}
+            />
+            <DashedSphere 
+              position={[-5, 0, 0]} 
+              size={sphereSize} 
+              onClick={() => handleSphereClick([-5, 0, 0])}
+              visible={visibleDashedSpheres['-5,0,0']}
+            />
+            <DashedSphere 
+              position={[0, 0, 5]} 
+              size={sphereSize} 
+              onClick={() => handleSphereClick([0, 0, 5])}
+              visible={visibleDashedSpheres['0,0,5']}
+            />
+            <DashedSphere 
+              position={[0, 0, -5]} 
+              size={sphereSize} 
+              onClick={() => handleSphereClick([0, 0, -5])}
+              visible={visibleDashedSpheres['0,0,-5']}
+            />
+          </>
+        ), [handleSphereClick, sphereSize, visibleDashedSpheres])}
+
+          
+          {activeSpherePosition && (
+            <LargeSphere 
+              position={activeSpherePosition}
+              visible={isLargeSphereVisible}
+            />
+          )}
+          
+          {targetSpherePosition && (
+            <HumanModel
+              position={getHumanPosition(targetSpherePosition)}
+              visible={isHumanModelVisible}
+            />
+          )}
+        
+          <CameraController
+            isCameraMoving={isCameraMoving}
+            targetSpherePosition={targetSpherePosition}
+            setIsCameraMoving={setIsCameraMoving}
+            setCameraAnimationComplete={handleCameraAnimationComplete}
+            setIsLargeSphereVisible={setIsLargeSphereVisible}
+            setIsHumanModelVisible={setIsHumanModelVisible}
+            cameraAnimationComplete={cameraAnimationComplete}
+            isCameraReset={isCameraReset}
+          />
         </Scene>
       </div>
     </>
-  )
+  );
 }
 
 export async function getStaticProps() {
-  return { props: { title: 'Home' } }
+  return { props: { title: 'Home' } };
 }

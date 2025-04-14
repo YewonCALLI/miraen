@@ -1,6 +1,6 @@
 import Head from 'next/head'
 
-const titleDefault = 'SEJIN OH'
+const titleDefault = 'MIRAEN'
 const url = 'https://sejinoh.live'
 const description = 'React Three Fiber Starter Kit with Twin'
 const author = 'Author'
