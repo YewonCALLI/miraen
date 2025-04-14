@@ -153,6 +153,7 @@ const offset = new Vector3(0, -0.01, 0)
             >
               {getBalloonText(true)}
             </Text>
+            // @ts-ignore
             <lineSegments ref={lineRefA}>
               <bufferGeometry />
               <lineBasicMaterial color="black" />
