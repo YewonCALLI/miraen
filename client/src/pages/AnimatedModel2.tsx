@@ -172,7 +172,7 @@ const offset = new Vector3(0, -0.01, 0)
             >
               {getBalloonText(true)}
             </Text>
-
+            // @ts-ignore
             <line ref={lineRefB}>
               <bufferGeometry />
               <lineBasicMaterial color="black" />
