@@ -1,6 +1,7 @@
 import { useGLTF, useAnimations } from '@react-three/drei'
 import { useEffect, useRef } from 'react'
 import { Group } from 'three'
+import * as THREE from 'three'
 
 interface AnimatedModelProps {
   url: string
@@ -30,8 +31,8 @@ export default function AnimatedModel({
     const action = mixer.clipAction(clip, group.current!)
 
     mixer.stopAllAction()
-    action?.reset().play()
-    action?.setLoop(Infinity)
+    action.reset().play()
+    action.setLoop(THREE.LoopRepeat, Infinity)
     return () => {
       action?.stop()
     }
