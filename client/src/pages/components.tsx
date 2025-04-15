@@ -322,14 +322,12 @@ export function RotationAxis({ position = [0, 0, 0], length = 1.2, tilt = 23.5 }
         points={axisPoints.slice(0, 2)}
         color="red"
         lineWidth={1}
-        derivatives={true}
       />
 
       <Line
         points={axisPoints.slice(0, 2)}
         color="red"
         lineWidth={1}
-        derivatives={true}
       />
 
     </group>
