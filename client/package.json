@@ -10,7 +10,7 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@react-three/drei": "^9.40.0",
+    "@react-three/drei": "^10.0.6",
     "@react-three/fiber": "^8.9.0",
     "@studio-freight/lenis": "^0.2.28",
     "babel-plugin-macros": "^3.1.0",
@@ -30,8 +30,8 @@
     "react-spring": "^9.5.5",
     "sass": "^1.59.3",
     "styled-components": "^5.3.8",
-    "three": "^0.155.0",
-    "three-stdlib": "^2.17.3",
+    "three": "^0.175.0",
+    "three-stdlib": "^2.35.15",
     "twin.macro": "^3.1.0"
   },
   "devDependencies": {
