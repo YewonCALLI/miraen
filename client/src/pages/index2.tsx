@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import AnimatedModel from '../components/AnimatedModel'
 import { useState, useEffect } from 'react'
+import { SoftShadows } from '@react-three/drei'
 
 type ModelType = 'boy' | 'muscle' | 'bone'
 type AnimationState = 'walk' | 'pose'
@@ -91,9 +92,27 @@ export default function Page() {
         </div>
       )}
       
-      <Canvas camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
+      <Canvas shadows camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
+      <SoftShadows size={50} samples={16} focus={0.5} />
         <ambientLight intensity={1.0} />
-        <directionalLight position={[5, 5, 5]} intensity={3} />
+        <directionalLight position={[5, 5, 5]} intensity={3} castShadow 
+
+        shadow-camera-near={0.1}
+        shadow-camera-far={10}
+        shadow-camera-left={-1}
+        shadow-camera-right={1}
+        shadow-camera-top={1}
+        shadow-camera-bottom={-1} />
+        <mesh
+          rotation={[-Math.PI / 2, 0, 0]}
+          position={[0, -0.3, 0]}
+          receiveShadow
+        >
+          <planeGeometry args={[20, 20]} />
+          <meshStandardMaterial color="#000" />
+          <shadowMaterial opacity={0.2} />
+        </mesh>
+
 
         {!isLoading && (
           <AnimatedModel

@@ -159,6 +159,11 @@ export default function AnimatedModel2({
     const arms: Object3D[] = []
     scene.traverse((obj) => {
       obj.frustumCulled = false
+      if ((obj as Mesh).isMesh) {
+        obj.castShadow = true
+        obj.receiveShadow = true // 필요하면
+      }
+      
       if (obj.name.toLowerCase().includes('arm')) {
         arms.push(obj)
       }

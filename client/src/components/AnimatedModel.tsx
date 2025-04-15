@@ -83,6 +83,13 @@ export default function AnimatedModel({
         modelRoot.remove(muscleLayer)
       }
     }
+
+    scene.traverse((obj) => {
+      if ((obj as any).isMesh) {
+        obj.castShadow = true
+        obj.receiveShadow = true
+      }
+    })
   }, [scene, removeMuscleLayer])
 
   useFrame((state, delta) => {
