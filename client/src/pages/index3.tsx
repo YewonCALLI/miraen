@@ -1,68 +1,81 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import AnimatedModel2 from '../components/AnimatedModel2'
-import { useState, Suspense } from 'react'
-import Loading from '@/components/canvas/Scene/Loading'
-import { SoftShadows } from '@react-three/drei'
-
+import { useState } from 'react'
 
 export default function Page() {
-  const [action, setAction] = useState<'extend' | 'fold'>('extend')
+  const [action, setAction] = useState<'extend' | 'fold'>('fold')
+
+  const [lineTargetPosA, setLineTargetPosA] = useState<[number, number, number]>([-0.035, 0.001, -0.015])
+  const [lineTargetPosB, setLineTargetPosB] = useState<[number, number, number]>([-0.035, 0.001, -0.015])
+  const [hasExtended, setHasExtended] = useState(false)
+
+  const handleExtend = () => {
+    setAction('extend')
+
+    if (!hasExtended) {
+      setLineTargetPosA(([x, y, z]) => [x, y, z+0.002] as [number, number, number])
+      setLineTargetPosB(([x, y, z]) => [x, y, z+0.002] as [number, number, number])
+      setHasExtended(true)
+    }
+  }
+
+  const handleFold = () => {
+    setAction('fold')
+    setLineTargetPosA([-0.035, 0.001, -0.015])
+    setLineTargetPosB([-0.035, 0.001, -0.015])
+    setHasExtended(false)
+  }
 
   return (
     <>
       <Canvas shadows camera={{ position: [-0.1, 0.1, 0.0], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
-      <ambientLight intensity={1.0} />
-      <AnimatedModel2
+        {/* Ambient Light */}
+        <ambientLight intensity={3.0} />
+
+        {/* Model */}
+        <AnimatedModel2
           url="/models/Anatomy/Arm/Arm_Movement.gltf"
           actionName={action}
           scale={1.5}
           position={[0, -0.2, 0]}
-          lineTargetPosA={[-0.042, 0.002, -0.01]} 
-          lineTargetPosB={[-0.03, 0.007, -0.01]}
+          lineTargetPosA={lineTargetPosA}
+          lineTargetPosB={lineTargetPosB}
         />
 
-        <ambientLight intensity={1.0} />
-        <directionalLight position={[-0, 5, 1]} intensity={2.0} castShadow 
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-near={0.1}
-        shadow-camera-far={10}
-        shadow-camera-left={-1}
-        shadow-camera-right={1}
-        shadow-camera-top={1}
-        shadow-camera-bottom={-1}/>
-        <OrbitControls minDistance={0.2} maxDistance={0.6} />
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, -0.1, 0]}
-          receiveShadow
-        >
-          <planeGeometry args={[20, 20]} />
-          <meshStandardMaterial color="#dddddd" />
-          <shadowMaterial opacity={0.3} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
+          <planeGeometry args={[5, 5]} />
+          <shadowMaterial opacity={0.4} />
         </mesh>
 
+        <directionalLight
+          position={[0, 5, 1]}
+          intensity={1.0}
+          castShadow
+          shadow-mapSize-width={2048}
+          shadow-mapSize-height={2048}
+          shadow-camera-near={0.1}
+          shadow-camera-far={10}
+          shadow-camera-left={-1}
+          shadow-camera-right={1}
+          shadow-camera-top={1}
+          shadow-camera-bottom={-1}
+        />
 
+        <OrbitControls minDistance={0.2} maxDistance={0.6} />
       </Canvas>
-      <div style={{ position: 'absolute', display: 'flex', bottom: '4%', left: '50%', transform: 'translateX(-50%)', gap: '10px'}}>
-        <button
-          onClick={() => setAction('extend')}
-          style={{
 
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            padding: '10px 20px',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            marginBottom: '10px',
-          }}>
-          팔 접기
-        </button>
-        <br />
+      {/* Buttons */}
+      <div style={{
+        position: 'absolute',
+        display: 'flex',
+        bottom: '4%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        gap: '10px'
+      }}>
         <button
-          onClick={() => setAction('fold')}
+          onClick={handleFold}
           style={{
             backgroundColor: '#4CAF50',
             color: 'white',
@@ -73,6 +86,19 @@ export default function Page() {
             marginBottom: '10px',
           }}>
           팔 펴기
+        </button>
+        <button
+          onClick={handleExtend}
+          style={{
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            padding: '10px 20px',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            marginBottom: '10px',
+          }}>
+          팔 접기
         </button>
       </div>
     </>
