@@ -18,8 +18,8 @@ export default function AnimatedModel2({
   scale = 1,
   actionName,
   position = [0, 0, 0],
-  lineTargetPosA = [-0.03, 0.01, -0.03],
-  lineTargetPosB = [0.03, -0.03, 0.09],
+  lineTargetPosA = [-0.03, 0.01, -0.02],
+  lineTargetPosB = [0.03, -0.01, 0.00],
 }: Props) {
   const group = useRef<Group>(null)
   const { scene, animations } = useGLTF(url)
@@ -32,8 +32,8 @@ export default function AnimatedModel2({
   const lineRefA = useRef<LineSegments>(null)
   const lineRefB = useRef<LineSegments>(null)
 
-  const textOffsetA = new THREE.Vector3(-0.1, 0.20, -0.02)
-  const textOffsetB = new THREE.Vector3(0.03, -0.03, 0.09)
+  const textOffsetA = new THREE.Vector3(-0.05, 0.23, -0.05)
+  const textOffsetB = new THREE.Vector3(-0.005, 0.2, 0.03)
 
   const prevTextPosA = useRef(new THREE.Vector3())
   const prevTextPosB = useRef(new THREE.Vector3())
@@ -41,21 +41,16 @@ export default function AnimatedModel2({
   const [armReady, setArmReady] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  const redTargetRef = useRef<Mesh>(null)
+  const blueTargetRef = useRef<Mesh>(null)
+
   const forceHighlightColor = (mesh: Mesh, color: string) => {
     const apply = (mat: Material | null | undefined) => {
       if (!mat || typeof mat.clone !== 'function') return mat
       const cloned = mat.clone()
       if (cloned instanceof MeshStandardMaterial) {
-        cloned.color.set(color)
         cloned.emissive.set(color)
-        cloned.emissiveIntensity = 1.0
-        cloned.map = null
-        cloned.roughnessMap = null
-        cloned.metalnessMap = null
-        cloned.normalMap = null
-        cloned.bumpMap = null
-        cloned.aoMap = null
-        cloned.alphaMap = null
+        cloned.emissiveIntensity = 0.6
       }
       return cloned
     }
@@ -118,14 +113,47 @@ export default function AnimatedModel2({
   }, [actions, animations, actionName])
 
   useEffect(() => {
-    if (!scene) return
+    if (!scene || !group.current) return
+    
+    // 정확한 위치에 있는 메시 찾기
+    const meshA = scene.children[1]?.children[4] as Mesh
+    const meshB = scene.children[1]?.children[2] as Mesh
+    
+    if (meshA && meshB) {
+      console.log('Found meshA:', meshA.name, 'and meshB:', meshB.name)
+      redTargetRef.current = meshA
+      blueTargetRef.current = meshB
+      
+      // 메시가 속한 전체 계층 구조 확인
+      console.log('MeshA parent hierarchy:', meshA.parent?.name, meshA.parent?.parent?.name)
+      console.log('MeshB parent hierarchy:', meshB.parent?.name, meshB.parent?.parent?.name)
+    } else {
+      console.warn('Could not find target meshes at specified indices')
+      
+      // 디버깅: 씬 구조 출력
+      console.log('Scene structure:')
+      scene.traverse((obj) => {
+        console.log(`- ${obj.name} (${obj.type}) - parent: ${obj.parent?.name || 'none'}`)
+      })
+    }
+  }, [scene, group])
+  
 
-    const muscle = scene.getObjectByName('Arm_Muscle') as Mesh
-    const bone = scene.getObjectByName('Arm_Skeleton') as Mesh
-
-    if (muscle) forceHighlightColor(muscle, 'red')
-    if (bone) forceHighlightColor(bone, 'blue')
-  }, [scene])
+  useEffect(() => {
+    const meshA = redTargetRef.current
+    const meshB = blueTargetRef.current
+  
+    if (!meshA || !meshB) return
+  
+    if (actionName === 'fold') {
+      forceHighlightColor(meshA, 'red')
+      forceHighlightColor(meshB, 'blue')
+    } else {
+      forceHighlightColor(meshA, 'blue')
+      forceHighlightColor(meshB, 'red')
+    }
+  }, [actionName])
+  
 
   useEffect(() => {
     const arms: Object3D[] = []
@@ -144,34 +172,51 @@ export default function AnimatedModel2({
 
   useFrame(({ camera }) => {
     if (!armReady) return
-
+  
     const updateTextAndLine = (
       armRef: Object3D | null,
       textRef: Object3D | null,
       lineRef: THREE.LineSegments | null,
       offset: THREE.Vector3,
       prevPosRef: React.MutableRefObject<THREE.Vector3>,
-      customStart: [number, number, number]
+      startPosition: [number, number, number]
     ) => {
       if (!armRef || !textRef || !lineRef) return
-
+  
       const armWorldPos = new THREE.Vector3()
       const targetTextPos = new THREE.Vector3()
-
+      const startWorldPos = new THREE.Vector3(...startPosition)
+  
+      armRef.updateMatrixWorld(true)
       armRef.getWorldPosition(armWorldPos)
+  
       targetTextPos.copy(armWorldPos).add(offset)
-
       prevPosRef.current.lerp(targetTextPos, 0.1)
       textRef.position.copy(prevPosRef.current)
       textRef.lookAt(camera.position)
-
-      const start = new THREE.Vector3(...customStart)
-      lineRef.geometry.setFromPoints([start, prevPosRef.current])
+  
+      lineRef.geometry.setFromPoints([startWorldPos, prevPosRef.current])
     }
-
-    updateTextAndLine(armRefA.current, textRefA.current, lineRefA.current, textOffsetA, prevTextPosA, lineTargetPosA)
-    updateTextAndLine(armRefB.current, textRefB.current, lineRefB.current, textOffsetB, prevTextPosB, lineTargetPosB)
+  
+    updateTextAndLine(
+      armRefA.current,
+      textRefA.current,
+      lineRefA.current,
+      textOffsetA,
+      prevTextPosA,
+      lineTargetPosA
+    )
+  
+    updateTextAndLine(
+      armRefB.current,
+      textRefB.current,
+      lineRefB.current,
+      textOffsetB,
+      prevTextPosB,
+      lineTargetPosB
+    )
   })
+  
 
   const getBalloonText = (isA: boolean) => {
     if (actionName === 'extend') {
@@ -183,7 +228,10 @@ export default function AnimatedModel2({
 
   return (
     <>
-      <primitive ref={group} object={scene} scale={scale} position={position} />
+    <group ref={group} scale={scale} position={position}>
+      <primitive object={scene} />
+    </group>
+
       {armReady && (
         <>
           <group>

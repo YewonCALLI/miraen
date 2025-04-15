@@ -10,18 +10,21 @@ export default function Page() {
 
   return (
     <>
-      <Loading camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
-          <AnimatedModel2
-            url='/models/Anatomy/Arm/Arm_Movement.gltf'
-            actionName={action}
-            scale={1.5}
-            position={[0, -0.2, 0]}
-          />
+      <Loading camera={{ position: [-0.1, 0.1, 0.0], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
+      <AnimatedModel2
+          url="/models/Anatomy/Arm/Arm_Movement.gltf"
+          actionName={action}
+          scale={1.5}
+          position={[0, -0.2, 0]}
+          lineTargetPosA={[-0.02, 0.03, -0.02]} 
+          lineTargetPosB={[-0.03, 0.02, -0.015]}
+        />
+
         <ambientLight intensity={1.0} />
         <directionalLight position={[-5, 5, 5]} intensity={2} />
-        <OrbitControls minDistance={0.22} maxDistance={0.4} />
+        <OrbitControls minDistance={0.2} maxDistance={0.6} />
       </Loading>
-      <div style={{ position: 'absolute', top: 150, left: 200 }}>
+      <div style={{ position: 'absolute', display: 'flex', bottom: '4%', left: '50%', transform: 'translateX(-50%)', gap: '10px'}}>
         <button
           onClick={() => setAction('extend')}
           style={{
