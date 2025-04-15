@@ -14,8 +14,8 @@ export default function Page() {
     setAction('extend')
 
     if (!hasExtended) {
-      setLineTargetPosA(([x, y, z]) => [x, y, z+0.002] as [number, number, number])
-      setLineTargetPosB(([x, y, z]) => [x, y, z+0.002] as [number, number, number])
+      setLineTargetPosA(([x, y, z]) => [x, y, z+0.001] as [number, number, number])
+      setLineTargetPosB(([x, y, z]) => [x, y, z+0.005] as [number, number, number])
       setHasExtended(true)
     }
   }
@@ -31,6 +31,7 @@ export default function Page() {
     <>
       <Canvas shadows camera={{ position: [-0.1, 0.1, 0.13], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
         {/* Ambient Light */}
+        <fog attach="fog" args={['#f0f0f0', 0.3, 0.9]} />
         <ambientLight intensity={3.0} />
 
         {/* Model */}
@@ -61,6 +62,20 @@ export default function Page() {
           shadow-camera-top={1}
           shadow-camera-bottom={-1}
         />
+
+        <directionalLight
+          position={[-0.5, 0.2, 0.3]} // 왼쪽 위에서 비추는 느낌
+          intensity={0.8}
+          color="#B388EB" // 연보라
+        />
+
+        <directionalLight
+          position={[0.5, 0.2, 0.3]} // 오른쪽 위에서 비추는 느낌
+          intensity={0.8}
+          color="#FF8DC7" // 핑크
+        />
+
+
 
         <OrbitControls minDistance={0.2} maxDistance={0.6} />
       </Canvas>

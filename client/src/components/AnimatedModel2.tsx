@@ -19,7 +19,7 @@ export default function AnimatedModel2({
   actionName,
   position = [0, 0, 0],
   lineTargetPosA = [-0.03, 0.00, -0.02],
-  lineTargetPosB = [0.03, -0.05, 0.00],
+  lineTargetPosB = [0.03, -0.05, 0.01],
 }: Props) {
   const group = useRef<Group>(null)
   const { scene, animations } = useGLTF(url)
@@ -198,7 +198,9 @@ export default function AnimatedModel2({
       targetTextPos.copy(armWorldPos).add(offset)
       prevPosRef.current.lerp(targetTextPos, 0.1)
       textRef.position.copy(prevPosRef.current)
-      textRef.lookAt(camera.position)
+  
+      // ✅ 카메라 회전만 따라감 (Billboard처럼)
+      textRef.quaternion.copy(camera.quaternion)
   
       lineRef.geometry.setFromPoints([startWorldPos, prevPosRef.current])
     }
@@ -221,6 +223,7 @@ export default function AnimatedModel2({
       lineTargetPosB
     )
   })
+  
   
 
   const getBalloonText = (isA: boolean) => {

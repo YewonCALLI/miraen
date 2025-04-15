@@ -22,6 +22,7 @@ const allPreloadUrls = [
   ...preloadModelUrls.map(url => `${url}#bone`)
 ]
 
+
 export default function Page() {
   const [modelType, setModelType] = useState<ModelType>('boy')
   const [animState, setAnimState] = useState<AnimationState>('pose')
@@ -62,6 +63,8 @@ export default function Page() {
 
   const modelKey = getModelKey()
   const modelUrl = `/models/Anatomy/${modelKey}.gltf`
+  const lightIntensity = modelType === 'boy' ? 0.2 : 3.0
+
 
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
@@ -94,16 +97,29 @@ export default function Page() {
       )}
       
       <Canvas shadows camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
-
-        <ambientLight intensity={1.7} />
+      <fog attach="fog" args={['#f0f0f0', 0.3, 0.9]} />
+        <ambientLight intensity={2.0} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]} receiveShadow>
           <planeGeometry args={[5, 5]} />
           <shadowMaterial opacity={0.4} />
         </mesh>
 
+
         <directionalLight
-          position={[0, 5, 3]}
-          intensity={3.0}
+          position={[-0.5, 0.2, 0.3]} // 왼쪽 위에서 비추는 느낌
+          intensity={0.8}
+          color="#B388EB" // 연보라
+        />
+
+        <directionalLight
+          position={[0.5, 0.2, 0.3]} // 오른쪽 위에서 비추는 느낌
+          intensity={0.8}
+          color="#FF8DC7" // 핑크
+        />
+
+        <directionalLight
+          position={[0, 5, 1]}
+          intensity={lightIntensity}
           castShadow
           receiveShadow
           shadow-mapSize-width={2048}
@@ -115,6 +131,8 @@ export default function Page() {
           shadow-camera-top={1}
           shadow-camera-bottom={-1}
         />
+
+
 
         {!isLoading && (
           <AnimatedModel
