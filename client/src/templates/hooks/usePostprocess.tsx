@@ -26,10 +26,11 @@ const usePostProcess = () => {
 
     const renderTarget = new THREE.WebGLRenderTarget(512, 512, {
       depthBuffer: true,
-      encoding: THREE.sRGBEncoding
     })
     
+    // renderTarget.texture.encoding = THREE.sRGBEncoding
     renderTarget.depthTexture = new THREE.DepthTexture(512, 512)
+    
     
 
     const material = new THREE.RawShaderMaterial({
