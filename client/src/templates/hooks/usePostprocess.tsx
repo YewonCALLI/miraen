@@ -25,10 +25,12 @@ const usePostProcess = () => {
     screenScene.add(screen)
 
     const renderTarget = new THREE.WebGLRenderTarget(512, 512, {
-      samples: 4,
-      encoding: gl.outputEncoding, // ✅ 최신 three.js에선 `encoding` -> `outputEncoding`
+      depthBuffer: true,
+      encoding: THREE.sRGBEncoding
     })
-    renderTarget.depthTexture = new THREE.DepthTexture()
+    
+    renderTarget.depthTexture = new THREE.DepthTexture(512, 512)
+    
 
     const material = new THREE.RawShaderMaterial({
       uniforms: {
