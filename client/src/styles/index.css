@@ -13,9 +13,17 @@
     transition: all 0.3s ease-in-out;
   }
 
+  @font-face {
+    font-family: 'NoonnuBasicGothicRegular';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noon-2410@1.0/NoonnuBasicGothicRegular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+  }
+
   html,
   body,
   #__next {
     width: 100%;
+    font-family: 'NoonnuBasicGothicRegular', sans-serif;
   }
 }
