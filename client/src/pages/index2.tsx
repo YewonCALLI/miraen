@@ -103,7 +103,7 @@ export default function Page() {
 
         <directionalLight
           position={[0, 5, 3]}
-          intensity={4.0}
+          intensity={3.0}
           castShadow
           receiveShadow
           shadow-mapSize-width={2048}
