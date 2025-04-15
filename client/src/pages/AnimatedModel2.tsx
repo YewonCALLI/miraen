@@ -20,8 +20,9 @@ export default function AnimatedModel2({ url, scale = 1, actionName, position = 
     const armRefB = useRef<Object3D>(null)
     const textRefA = useRef<Object3D>(null)
     const textRefB = useRef<Object3D>(null)
-    const lineRefA = useRef<THREE.Line>(null)
-    const lineRefB = useRef<THREE.Line>(null)
+    const lineRefA = useRef<THREE.LineSegments>(null)
+    const lineRefB = useRef<THREE.LineSegments>(null)
+
 
     const textOffsetA = new THREE.Vector3(-0.04, 0.01, -0.02)
     const textOffsetB = new THREE.Vector3(0.03, -0.03, 0.09)
@@ -139,44 +140,46 @@ const offset = new Vector3(0, -0.01, 0)
 
       {armReady && (
         <>
+          {/* 독립된 텍스트와 선 */}
           <group>
-          <Text
-            ref={textRefB}
-            font="/fonts/Pretendard-SemiBold.ttf"
-            fontSize={0.005}
-            color="black"
-            anchorX="center"
-            anchorY="middle"
-            material-toneMapped={false}
-            material-depthTest={false}
-          >
-            {getBalloonText(false)} {/* <- 여기도 true → false 로 수정해야 의미 맞음 */}
-          </Text>
-          <lineSegments ref={lineRefA}>
-            <bufferGeometry />
-            <lineBasicMaterial color="black" />
-          </lineSegments>
-        </group>
+            <Text
+              ref={textRefA}
+              font="/fonts/Pretendard-SemiBold.ttf"
+              fontSize={0.005}
+              color="black"
+              anchorX="center"
+              anchorY="middle"
+              material-toneMapped={false}
+              material-depthTest={false}
+            >
+              {getBalloonText(true)}
+            </Text>
+            <lineSegments ref={lineRefA}>
+              <bufferGeometry />
+              <lineBasicMaterial color="black" />
+            </lineSegments>
+
+          </group>
 
           <group>
-          <Text
-            ref={textRefB}
-            font="/fonts/Pretendard-SemiBold.ttf"
-            fontSize={0.005}
-            color="black"
-            anchorX="center"
-            anchorY="middle"
-            material-toneMapped={false}
-            material-depthTest={false}
-          >
-            {getBalloonText(false)} {/* <- 여기도 true → false 로 수정해야 의미 맞음 */}
-          </Text>
-          <lineSegments ref={lineRefB}>
-            <bufferGeometry />
-            <lineBasicMaterial color="black" />
-          </lineSegments>
-        </group>
+            <Text
+              ref={textRefB}
+              font="/fonts/Pretendard-SemiBold.ttf"
+              fontSize={0.005}
+              color="black"
+              anchorX="center"
+              anchorY="middle"
+              material-toneMapped={false}
+              material-depthTest={false}
+            >
+              {getBalloonText(true)}
+            </Text>
 
+            <lineSegments ref={lineRefB}>
+              <bufferGeometry />
+              <lineBasicMaterial color="black" />
+            </lineSegments>
+          </group>
         </>
       )}
     </>
