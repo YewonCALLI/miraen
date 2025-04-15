@@ -120,11 +120,11 @@ export default function Page() {
         blend={100}
       >
         <RandomizedLight
-          amount={8}
-          radius={1}
+          amount={4}
+          radius={4}
           ambient={0.5}
           intensity={1}
-          position={[5, 5, 2]}
+          position={[0, 5, 1]}
           bias={0.001}
         />
       </AccumulativeShadows>
