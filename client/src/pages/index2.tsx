@@ -23,7 +23,7 @@ export default function Page() {
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
     Boy_Walking: 3,
-    Boy_Pose: 1,
+    Boy_Pose: 2,
     Muscle_Walking: 1,
     Muscle_Pose: 0,
   }
@@ -34,7 +34,7 @@ export default function Page() {
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <Canvas camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
         <ambientLight intensity={1.0} />
-        <directionalLight position={[5, 5, 5]} intensity={1} />
+        <directionalLight position={[5, 5, 5]} intensity={3} />
 
         <AnimatedModel
           key={`${modelUrl}-${modelType}-${animState}`} // ← 모델 상태 전체 반영

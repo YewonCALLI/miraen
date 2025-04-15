@@ -203,8 +203,13 @@ export default function Page(props: PageProps) {
           {process.env.NODE_ENV === 'development' && <Perf />}
 
           <Stars count={2000} size={0.1} />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[0, 0, 0]} intensity={2} />
+          <ambientLight intensity={1.5} />
+          <directionalLight
+            position={[0.0, 0.0, 0.0]}
+            castShadow
+            intensity={Math.PI * 2}
+          />
+          <pointLight position={[0, 0, 0]} castShadow intensity={1} distance= {2.0}/>
 
           <Sun
             onClick={handleSunClick}
@@ -218,7 +223,7 @@ export default function Page(props: PageProps) {
             <Earth
               position={isEarthOrbiting ? [4.9, 0, 0] : earthPosition[0] === 5 ? earthPosition : [5, 0, 0]}
               isOrbiting={isEarthOrbiting}
-              speed={0.6}
+              speed={0.2}
               modelPath='/models/earth/earth.gltf'
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['5,0,0']}
@@ -229,7 +234,7 @@ export default function Page(props: PageProps) {
             <Earth
               position={isEarthOrbiting ? [-5, 0, 0] : earthPosition[0] === -5 ? earthPosition : [-5, 0, 0]}
               isOrbiting={isEarthOrbiting}
-              speed={0.6}
+              speed={0.2}
               modelPath='/models/earth/earth.gltf'
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['-5,0,0']}
@@ -240,7 +245,7 @@ export default function Page(props: PageProps) {
             <Earth
               position={isEarthOrbiting ? [0, 0, 5] : earthPosition[2] === 5 ? earthPosition : [0, 0, 5]}
               isOrbiting={isEarthOrbiting}
-              speed={0.6}
+              speed={0.2}
               modelPath='/models/earth/earth.gltf'
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['0,0,5']}
@@ -251,7 +256,7 @@ export default function Page(props: PageProps) {
             <Earth
               position={isEarthOrbiting ? [0, 0, -5] : earthPosition[2] === -5 ? earthPosition : [0, 0, -5]}
               isOrbiting={isEarthOrbiting}
-              speed={0.6}
+              speed={0.2}
               modelPath='/models/earth/earth.gltf'
               shouldRotate={shouldEarthRotate}
               visible={visibleEarths['0,0,-5']}

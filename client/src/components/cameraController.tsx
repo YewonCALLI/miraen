@@ -213,13 +213,13 @@ export default function CameraController({
   useFrame(() => {
     // 카메라 이동 애니메이션
     if (isCameraMoving && targetSpherePosition && isAnimatingRef.current) {
-      const speed = 0.05
+      const speed = 0.02
 
       // 위치 보간
       camera.position.lerp(cameraTargetRef.current, speed)
 
       // 목표 위치에 도달했는지 확인
-      if (camera.position.distanceTo(cameraTargetRef.current) < 0.1) {
+      if (camera.position.distanceTo(cameraTargetRef.current) < 0.05) {
         // 애니메이션 완료 처리
         setIsCameraMoving(false)
         setCameraAnimationComplete(true)
