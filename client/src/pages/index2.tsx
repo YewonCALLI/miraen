@@ -66,7 +66,7 @@ export default function Page() {
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
     Boy_Walking: 3,
-    Boy_Pose: 2,
+    Boy_Pose: 1,
     Muscle_Walking: 1,
     Muscle_Pose: 0,
   }
@@ -111,24 +111,23 @@ export default function Page() {
 
         <OrbitControls minDistance={0.22} maxDistance={0.4} />
         <AccumulativeShadows
-          position={[0, -0.25, 0]}
-          scale={5}
-          color="#000000"
-          opacity={0.8}
-          frames={100}
-          temporal
-          blend={100}
-        >
-          <RandomizedLight
-            amount={8}
-            radius={3}
-            ambient={0.5}
-            intensity={1}
-            position={[5, 5, 2]}
-            bias={0.001}
-          />
-        </AccumulativeShadows>
-
+        position={[0, -0.25, 0]}
+        scale={5}
+        color="#000000"
+        opacity={0.8}
+        frames={100}
+        temporal
+        blend={100}
+      >
+        <RandomizedLight
+          amount={8}
+          radius={1}
+          ambient={0.5}
+          intensity={1}
+          position={[5, 5, 2]}
+          bias={0.001}
+        />
+      </AccumulativeShadows>
       </Canvas>
 
       {/* UI */}
