@@ -87,7 +87,6 @@ export default function AnimatedModel({
     scene.traverse((obj) => {
       if ((obj as any).isMesh) {
         obj.castShadow = true
-        obj.receiveShadow = true
       }
     })
   }, [scene, removeMuscleLayer])

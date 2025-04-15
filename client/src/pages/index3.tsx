@@ -12,16 +12,7 @@ export default function Page() {
   return (
     <>
       <Canvas shadows camera={{ position: [-0.1, 0.1, 0.0], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
-      <SoftShadows size={50} samples={16} focus={0.5} />
-              <ambientLight intensity={1.0} />
-              <directionalLight position={[5, 5, 5]} intensity={3} castShadow 
-      
-              shadow-camera-near={0.1}
-              shadow-camera-far={10}
-              shadow-camera-left={-1}
-              shadow-camera-right={1}
-              shadow-camera-top={1}
-              shadow-camera-bottom={-1} />
+      <ambientLight intensity={1.0} />
       <AnimatedModel2
           url="/models/Anatomy/Arm/Arm_Movement.gltf"
           actionName={action}
@@ -32,7 +23,7 @@ export default function Page() {
         />
 
         <ambientLight intensity={1.0} />
-        <directionalLight position={[-0, 5, 3]} intensity={1.7} castShadow 
+        <directionalLight position={[-0, 5, 1]} intensity={2.0} castShadow 
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-near={0.1}
@@ -49,7 +40,7 @@ export default function Page() {
         >
           <planeGeometry args={[20, 20]} />
           <meshStandardMaterial color="#dddddd" />
-          <shadowMaterial opacity={0.4} />
+          <shadowMaterial opacity={0.3} />
         </mesh>
 
 
