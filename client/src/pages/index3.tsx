@@ -29,7 +29,7 @@ export default function Page() {
 
   return (
     <>
-      <Canvas shadows camera={{ position: [-0.1, 0.1, 0.0], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
+      <Canvas shadows camera={{ position: [-0.1, 0.1, 0.13], fov: 75 }} style={{ width: '100vw', height: '100vh' }}>
         {/* Ambient Light */}
         <ambientLight intensity={3.0} />
 

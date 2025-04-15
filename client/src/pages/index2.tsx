@@ -93,7 +93,7 @@ export default function Page() {
         </div>
       )}
       
-      <Canvas shadows camera={{ position: [0.5, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
+      <Canvas shadows camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
 
         <ambientLight intensity={1.7} />
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.2, 0]} receiveShadow>
