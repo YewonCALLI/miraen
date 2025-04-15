@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import AnimatedModel from '../components/AnimatedModel'
 import { useState, useEffect } from 'react'
-import { ContactShadows } from '@react-three/drei'
+import { AccumulativeShadows, RandomizedLight } from '@react-three/drei'
 
 
 type ModelType = 'boy' | 'muscle' | 'bone'
@@ -96,27 +96,7 @@ export default function Page() {
       <Canvas shadows camera={{ position: [0, 0.5, 0.5], fov: 75 }} style={{ width: '100%', height: '100%' }}>
 
         <ambientLight intensity={1.0} />
-        <directionalLight position={[1, 5, 1]} intensity={1.7} castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-near={0.1}
-          shadow-camera-far={10}
-          shadow-camera-left={-1}
-          shadow-camera-right={1}
-          shadow-camera-top={1}
-          shadow-camera-bottom={-1}
-        />
-        <mesh
-          rotation={[-Math.PI / 2, 0, 0]}
-          position={[0, -0.2, 0]}
-          receiveShadow
-        >
-          <planeGeometry args={[20, 20]} />
-          <meshStandardMaterial color="#000" />
-          <shadowMaterial opacity={0.4} />
-        </mesh>
-
-
+        <directionalLight position={[1, 5, 1]} intensity={1.7} castShadow/>
         {!isLoading && (
           <AnimatedModel
             key={`${modelUrl}-${modelType}-${animState}`} // ← 모델 상태 전체 반영
@@ -130,6 +110,25 @@ export default function Page() {
         )}
 
         <OrbitControls minDistance={0.22} maxDistance={0.4} />
+        <AccumulativeShadows
+          position={[0, -0.25, 0]}
+          scale={5}
+          color="#000000"
+          opacity={0.8}
+          frames={100}
+          temporal
+          blend={100}
+        >
+          <RandomizedLight
+            amount={8}
+            radius={3}
+            ambient={0.5}
+            intensity={1}
+            position={[5, 5, 2]}
+            bias={0.001}
+          />
+        </AccumulativeShadows>
+
       </Canvas>
 
       {/* UI */}
