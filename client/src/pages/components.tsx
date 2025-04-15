@@ -236,7 +236,7 @@ export function DashedSphere({
         }
       }}
     >
-      <line geometry={geometry} material={material} computeLineDistances />
+    <primitive object={new THREE.Line(geometry, material)} />
     </group>
   );
 }
