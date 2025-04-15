@@ -79,7 +79,6 @@ export default function Page(props: PageProps) {
       '/earth_Earth_SpecularSmoothness.png',
       '/earth_Earth_Emission.png',
       '/earth_Cloud_AlbedoTransparency.png',
-      '/earth_Cloud_SpecularSmoothness.png'
     ].forEach(path => {
       if (!textureCache[path]) {
         textureCache[path] = textureLoader.load(path);
