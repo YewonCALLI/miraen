@@ -172,12 +172,14 @@ export default function Page() {
               key={type}
               onClick={() => setModelType(type)}
               style={{
-                padding: '8px 16px',
+                width: '60px',
+                height: '60px',
                 backgroundColor: modelType === type ? '#2196F3' : '#f1f1f1',
                 border: 'none',
-                borderRadius: '4px',
+                borderRadius: '50%',
                 cursor: 'pointer',
                 opacity: isLoading ? 0.5 : 1,
+                fontSize: '14px',
               }}
               disabled={isLoading}
             >
@@ -185,6 +187,7 @@ export default function Page() {
             </button>
           ))}
         </div>
+
       </div>
     </div>
   )
