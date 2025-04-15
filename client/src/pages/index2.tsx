@@ -102,9 +102,10 @@ export default function Page() {
         </mesh>
 
         <directionalLight
-          position={[1, 5, 1]}
-          intensity={1.0}
+          position={[0, 5, 3]}
+          intensity={4.0}
           castShadow
+          receiveShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.1}
@@ -114,6 +115,7 @@ export default function Page() {
           shadow-camera-top={1}
           shadow-camera-bottom={-1}
         />
+
         {!isLoading && (
           <AnimatedModel
             key={`${modelUrl}-${modelType}-${animState}`} // ← 모델 상태 전체 반영

@@ -161,7 +161,7 @@ export default function AnimatedModel2({
       obj.frustumCulled = false
       if ((obj as Mesh).isMesh) {
         obj.castShadow = true
-        obj.receiveShadow = true // 필요하면
+        obj.receiveShadow = true
       }
       
       if (obj.name.toLowerCase().includes('arm')) {
