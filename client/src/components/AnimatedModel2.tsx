@@ -18,8 +18,8 @@ export default function AnimatedModel2({
   scale = 1,
   actionName,
   position = [0, 0, 0],
-  lineTargetPosA = [-0.03, 0.01, -0.02],
-  lineTargetPosB = [0.03, -0.01, 0.00],
+  lineTargetPosA = [-0.03, 0.00, -0.02],
+  lineTargetPosB = [0.03, -0.05, 0.00],
 }: Props) {
   const group = useRef<Group>(null)
   const { scene, animations } = useGLTF(url)

@@ -18,8 +18,8 @@ export default function Page() {
           actionName={action}
           scale={1.5}
           position={[0, -0.2, 0]}
-          lineTargetPosA={[-0.02, 0.03, -0.02]} 
-          lineTargetPosB={[-0.03, 0.02, -0.015]}
+          lineTargetPosA={[-0.042, 0.002, -0.01]} 
+          lineTargetPosB={[-0.03, 0.007, -0.01]}
         />
 
         <ambientLight intensity={1.0} />
