@@ -1,12 +1,12 @@
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
-import AnimatedModel from './AnimatedModel'
+import AnimatedModel from '../components/AnimatedModel'
 import { useState } from 'react'
 
 type ModelType = 'boy' | 'muscle' | 'bone'
 type AnimationState = 'walk' | 'pose'
 
-function App() {
+export default function Page() {
   const [modelType, setModelType] = useState<ModelType>('boy')
   const [animState, setAnimState] = useState<AnimationState>('pose')
 
@@ -22,10 +22,10 @@ function App() {
 
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
-    'Boy_Walking': 3,
-    'Boy_Pose': 1,
-    'Muscle_Walking': 1,
-    'Muscle_Pose': 0,
+    Boy_Walking: 3,
+    Boy_Pose: 1,
+    Muscle_Walking: 1,
+    Muscle_Pose: 0,
   }
 
   const animIndex = animIndexMap[modelKey] ?? 0
@@ -46,26 +46,26 @@ function App() {
           removeMuscleLayer={modelType === 'bone'} // ← bone일 때만 제거
         />
 
-
         <OrbitControls minDistance={0.22} maxDistance={0.4} />
       </Canvas>
 
       {/* UI */}
-      <div style={{
-        position: 'absolute',
-        bottom: '20px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px',
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        padding: '10px',
-        borderRadius: '8px'
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '10px',
+          backgroundColor: 'rgba(255, 255, 255, 0.7)',
+          padding: '10px',
+          borderRadius: '8px',
+        }}>
         {/* 애니메이션 버튼 */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          {['walk', 'pose'].map(state => (
+          {['walk', 'pose'].map((state) => (
             <button
               key={state}
               onClick={() => setAnimState(state as AnimationState)}
@@ -74,9 +74,8 @@ function App() {
                 backgroundColor: animState === state ? '#4CAF50' : '#f1f1f1',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
+                cursor: 'pointer',
+              }}>
               {state === 'walk' ? '걷기' : '정지'}
             </button>
           ))}
@@ -84,7 +83,7 @@ function App() {
 
         {/* 모델 타입 버튼 */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          {(['boy', 'muscle', 'bone'] as ModelType[]).map(type => (
+          {(['boy', 'muscle', 'bone'] as ModelType[]).map((type) => (
             <button
               key={type}
               onClick={() => setModelType(type)}
@@ -93,9 +92,8 @@ function App() {
                 backgroundColor: modelType === type ? '#2196F3' : '#f1f1f1',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
+                cursor: 'pointer',
+              }}>
               {type === 'boy' ? '피부' : type === 'muscle' ? '근육' : '뼈'}
             </button>
           ))}
@@ -104,5 +102,3 @@ function App() {
     </div>
   )
 }
-
-export default App
