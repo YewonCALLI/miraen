@@ -106,19 +106,19 @@ export default function Page() {
 
 
         <directionalLight
-          position={[-0.5, 0.2, 0.3]} // 왼쪽 위에서 비추는 느낌
+          position={[-0.8, 0.2, 0.3]} // 왼쪽 위에서 비추는 느낌
           intensity={0.8}
           color="#B388EB" // 연보라
         />
 
         <directionalLight
-          position={[0.5, 0.2, 0.3]} // 오른쪽 위에서 비추는 느낌
+          position={[0.8, 0.2, 0.3]} // 오른쪽 위에서 비추는 느낌
           intensity={0.8}
           color="#FF8DC7" // 핑크
         />
 
         <directionalLight
-          position={[0, 5, 1]}
+          position={[0, 5, 3]}
           intensity={lightIntensity}
           castShadow
           receiveShadow
