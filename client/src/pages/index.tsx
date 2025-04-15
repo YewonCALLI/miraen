@@ -23,7 +23,7 @@ import CameraController from '../components/cameraController'
 // 텍스처 미리 캐싱
 const textureLoader = new THREE.TextureLoader()
 const textureCache: { [key: string]: THREE.Texture } = {}
-
+// ... 생략된 import는 그대로 유지
 export default function Page(props: PageProps) {
   const router = useRouter()
   const [isHovered, setIsHovered] = useState(false)
@@ -41,6 +41,8 @@ export default function Page(props: PageProps) {
   const [isLargeSphereVisible, setIsLargeSphereVisible] = useState(false)
   const [isHumanModelVisible, setIsHumanModelVisible] = useState(false)
   const [isSunVisible, setIsSunVisible] = useState(true)
+  const [areStarsVisible, setAreStarsVisible] = useState(true)
+
 
   const [visibleEarths, setVisibleEarths] = useState<EarthVisibilityState>({
     '5,0,0': true,
@@ -62,7 +64,6 @@ export default function Page(props: PageProps) {
     if (!targetPosition) return [0, 0, 0]
 
     const [offsetX, offsetY, offsetZ] = getHumanPositionOffset(targetPosition)
-
     return [targetPosition[0] + offsetX, targetPosition[1] + offsetY, targetPosition[2] + offsetZ]
   }, [])
 
@@ -99,7 +100,6 @@ export default function Page(props: PageProps) {
       newVisibleEarths[posKey] = true
       setVisibleEarths(newVisibleEarths)
 
-      // 모든 대시 구체 숨기기
       setVisibleDashedSpheres({
         '5,0,0': false,
         '-5,0,0': false,
@@ -122,6 +122,7 @@ export default function Page(props: PageProps) {
 
       setTimeout(() => {
         setIsCameraReset(false)
+        setAreStarsVisible(true)
         setTargetSpherePosition(position)
         setTimeout(() => {
           setIsCameraMoving(true)
@@ -129,11 +130,9 @@ export default function Page(props: PageProps) {
       })
     }
 
-    // 리셋 및 애니메이션 준비 실행
     resetAndPrepareAnimation()
   }, [])
 
-  // handleSunClick 함수 수정
   const handleSunClick = useCallback(() => {
     setActive((prev) => !prev)
 
@@ -157,7 +156,6 @@ export default function Page(props: PageProps) {
           '0,0,-5': true,
         })
 
-        // 모든 대시 구체 다시 보이게 설정
         setVisibleDashedSpheres({
           '5,0,0': true,
           '-5,0,0': true,
@@ -177,11 +175,21 @@ export default function Page(props: PageProps) {
   const handleCameraAnimationComplete = useCallback(() => {
     setCameraAnimationComplete(true)
     setShouldEarthRotate(false)
-    setIsSunVisible(false) // 카메라 이동 완료시 태양 숨기기
+    setIsSunVisible(false)
+    setAreStarsVisible(false) 
+
+    // 클릭된 지구 위치 숨김
+    if (activeSpherePosition) {
+      const posKey = activeSpherePosition.join(',')
+      setVisibleEarths((prev) => ({
+        ...prev,
+        [posKey]: false,
+      }))
+    }
 
     setIsLargeSphereVisible(true)
     setIsHumanModelVisible(true)
-  }, [])
+  }, [activeSpherePosition])
 
   useEffect(() => {
     document.body.style.cursor = isHovered ? 'pointer' : 'auto'
@@ -202,14 +210,10 @@ export default function Page(props: PageProps) {
         <Scene camera={{ position: [0, 5, 8], fov: 75 }}>
           {process.env.NODE_ENV === 'development' && <Perf />}
 
-          <Stars count={2000} size={0.1} />
+          {areStarsVisible && <Stars count={2000} size={0.1} />}
           <ambientLight intensity={1.5} />
-          <directionalLight
-            position={[0.0, 0.0, 0.0]}
-            castShadow
-            intensity={Math.PI * 2}
-          />
-          <pointLight position={[0, 0, 0]} castShadow intensity={1} distance= {2.0}/>
+          <directionalLight position={[0.0, 0.0, 0.0]} castShadow intensity={Math.PI * 2} />
+          <pointLight position={[0, 0, 0]} castShadow intensity={1} distance={2.0} />
 
           <Sun
             onClick={handleSunClick}
@@ -218,7 +222,7 @@ export default function Page(props: PageProps) {
             visible={isSunVisible}
           />
 
-          {/* 4개의 지구 위치 */}
+          {/* 지구들 */}
           {visibleEarths['5,0,0'] && (
             <Earth
               position={isEarthOrbiting ? [4.9, 0, 0] : earthPosition[0] === 5 ? earthPosition : [5, 0, 0]}
@@ -229,7 +233,6 @@ export default function Page(props: PageProps) {
               visible={visibleEarths['5,0,0']}
             />
           )}
-
           {visibleEarths['-5,0,0'] && (
             <Earth
               position={isEarthOrbiting ? [-5, 0, 0] : earthPosition[0] === -5 ? earthPosition : [-5, 0, 0]}
@@ -240,7 +243,6 @@ export default function Page(props: PageProps) {
               visible={visibleEarths['-5,0,0']}
             />
           )}
-
           {visibleEarths['0,0,5'] && (
             <Earth
               position={isEarthOrbiting ? [0, 0, 5] : earthPosition[2] === 5 ? earthPosition : [0, 0, 5]}
@@ -251,7 +253,6 @@ export default function Page(props: PageProps) {
               visible={visibleEarths['0,0,5']}
             />
           )}
-
           {visibleEarths['0,0,-5'] && (
             <Earth
               position={isEarthOrbiting ? [0, 0, -5] : earthPosition[2] === -5 ? earthPosition : [0, 0, -5]}
@@ -263,6 +264,7 @@ export default function Page(props: PageProps) {
             />
           )}
 
+          {/* 대시 스피어 */}
           {useMemo(
             () => (
               <>
@@ -296,7 +298,6 @@ export default function Page(props: PageProps) {
           )}
 
           {activeSpherePosition && <LargeSphere position={activeSpherePosition} visible={isLargeSphereVisible} />}
-
           {targetSpherePosition && (
             <HumanModel position={getHumanPosition(targetSpherePosition)} visible={isHumanModelVisible} />
           )}

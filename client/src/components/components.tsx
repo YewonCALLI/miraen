@@ -336,18 +336,25 @@ export function HumanModel({ position, visible, scale = 0.004, rotation = [0, Ma
     </group>
   )
 }
-
 export function LargeSphere({ position, visible }: LargeSphereProps) {
   const meshRef = useRef<THREE.Mesh>(null)
   const opacityRef = useRef(0)
   const sunTexture = useTexture('/models/earth/sky.png')
+  const innerTexture = useTexture('/models/earth/Panorama.png') // 투명 PNG 텍스처
+  const { gl } = useThree()
+
+  const clippingPlane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), [])
+
+  useEffect(() => {
+    gl.localClippingEnabled = true
+  }, [gl])
 
   useFrame(() => {
     if (!meshRef.current || !meshRef.current.material) return
     const material = meshRef.current.material as THREE.MeshBasicMaterial
 
     const targetOpacity = visible ? 1 : 0
-    const step = 0.07
+    const step = 0.01
 
     if (opacityRef.current < targetOpacity) {
       opacityRef.current = Math.min(opacityRef.current + step, targetOpacity)
@@ -360,14 +367,34 @@ export function LargeSphere({ position, visible }: LargeSphereProps) {
   })
 
   return (
-    <mesh ref={meshRef} position={position as any} visible={visible}>
-      <sphereGeometry args={[1, 32, 32]} />
-      <meshBasicMaterial
-        map={sunTexture || undefined}
-        side={THREE.DoubleSide}
-        transparent={true}
-        opacity={visible ? 1 : 0}
-      />
-    </mesh>
+    <group position={position as any}>
+      {/* 바깥 반구 */}
+      <mesh ref={meshRef} rotation={[0, -Math.PI / 2, 0]}> 
+        <sphereGeometry args={[10, 32, 32]} />
+        <meshStandardMaterial
+          map={sunTexture || undefined}
+          side={THREE.DoubleSide}
+          transparent={true}
+          opacity={visible ? 1 : 0}
+          emissive={new THREE.Color('#000')}
+          emissiveIntensity={0.4}
+          clippingPlanes={[clippingPlane]}
+          clipShadows={true}
+        />
+      </mesh>
+
+
+      {/* 안쪽 sphere (조금 더 작고 투명 PNG 텍스처 적용) */}
+      <mesh visible={visible}>
+        <sphereGeometry args={[9.8, 32, 32]}/>
+        <meshBasicMaterial
+          map={innerTexture}
+          side={THREE.DoubleSide}
+          transparent={true}
+          opacity={1.0}
+          depthWrite={false}
+        />
+      </mesh>
+    </group>
   )
 }
