@@ -243,7 +243,7 @@ export function DashedSphere({
 
 export function Sun({ onClick, onPointerOver, onPointerOut, visible = true }: SunProps) {
   const sunRef = useRef<THREE.Mesh>(null);
-  const sunTexture = useTexture('/models/sun_texture.jpeg');
+  const sunTexture = useTexture('/models/earth/sun_texture.jpeg');
   
   useFrame((_, delta) => {
     if (sunRef.current) {

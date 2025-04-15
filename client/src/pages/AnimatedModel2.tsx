@@ -139,46 +139,44 @@ const offset = new Vector3(0, -0.01, 0)
 
       {armReady && (
         <>
-          {/* 독립된 텍스트와 선 */}
           <group>
-            <Text
-              ref={textRefA}
-              font="/fonts/Pretendard-SemiBold.ttf"
-              fontSize={0.005}
-              color="black"
-              anchorX="center"
-              anchorY="middle"
-              material-toneMapped={false}
-              material-depthTest={false}
-            >
-              {getBalloonText(true)}
-            </Text>
-            // @ts-ignore
-            <lineSegments ref={lineRefA}>
-              <bufferGeometry />
-              <lineBasicMaterial color="black" />
-            </lineSegments>
-          </group>
+          <Text
+            ref={textRefB}
+            font="/fonts/Pretendard-SemiBold.ttf"
+            fontSize={0.005}
+            color="black"
+            anchorX="center"
+            anchorY="middle"
+            material-toneMapped={false}
+            material-depthTest={false}
+          >
+            {getBalloonText(false)} {/* <- 여기도 true → false 로 수정해야 의미 맞음 */}
+          </Text>
+          <lineSegments ref={lineRefA}>
+            <bufferGeometry />
+            <lineBasicMaterial color="black" />
+          </lineSegments>
+        </group>
 
           <group>
-            <Text
-              ref={textRefB}
-              font="/fonts/Pretendard-SemiBold.ttf"
-              fontSize={0.005}
-              color="black"
-              anchorX="center"
-              anchorY="middle"
-              material-toneMapped={false}
-              material-depthTest={false}
-            >
-              {getBalloonText(true)}
-            </Text>
-            // @ts-ignore
-            <line ref={lineRefB}>
-              <bufferGeometry />
-              <lineBasicMaterial color="black" />
-            </line>
-          </group>
+          <Text
+            ref={textRefB}
+            font="/fonts/Pretendard-SemiBold.ttf"
+            fontSize={0.005}
+            color="black"
+            anchorX="center"
+            anchorY="middle"
+            material-toneMapped={false}
+            material-depthTest={false}
+          >
+            {getBalloonText(false)} {/* <- 여기도 true → false 로 수정해야 의미 맞음 */}
+          </Text>
+          <lineSegments ref={lineRefB}>
+            <bufferGeometry />
+            <lineBasicMaterial color="black" />
+          </lineSegments>
+        </group>
+
         </>
       )}
     </>
