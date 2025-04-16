@@ -77,7 +77,7 @@ export default function Page() {
 
 
 
-        <OrbitControls minDistance={0.2} maxDistance={0.6} />
+        <OrbitControls minDistance={0.18} maxDistance={0.4} />
       </Canvas>
 
       {/* Buttons */}
