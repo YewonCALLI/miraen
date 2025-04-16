@@ -146,7 +146,7 @@ export default function Page() {
           />
         )}
 
-        <OrbitControls minDistance={0.3} maxDistance={0.45} />
+        <OrbitControls minDistance={0.33} maxDistance={0.45} />
       </Canvas>
 
       {/* UI */}
