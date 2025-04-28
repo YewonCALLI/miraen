@@ -58,13 +58,13 @@ export function ConstellationLayer({
   return (
     <mesh 
       ref={meshRef}
-      scale={[100, 100, 100]}
+      scale={[300, 300, 300]}
       raycast={() => null}
     >
       <sphereGeometry args={[1, 32, 32]} />
       <meshBasicMaterial
         map={tex}
-        color={new THREE.Color(0.9, 0.9, 1).multiplyScalar(0.3)}
+        color={new THREE.Color(0.9, 0.9, 0.9).multiplyScalar(0.7)}
         side={THREE.BackSide}
         transparent
         opacity={0}

@@ -196,7 +196,7 @@ export default function SpaceScene({
     <div className="absolute inset-0">
       {isLockedToSurface && (
         <button
-          className="absolute top-4 left-4 z-10 px-4 py-2 text-white rounded"
+          className="top-4 left-4 px-4 py-2 text-white rounded"
           onClick={handleResetClick}
         >
           돌아가기

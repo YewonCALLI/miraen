@@ -299,6 +299,7 @@ export function EarthModel({
   return (
     <group position={position} ref={groupRef} onClick={onClick}>
       {/* 지구 - 항상 렌더링하고 불투명도로 제어 */}
+      <group rotation={[0, Math.PI/4 * 1.2, 0]}>
       <primitive 
         object={earthScene.clone()} 
         scale={[0.084, 0.084, 0.084]} 
@@ -309,6 +310,7 @@ export function EarthModel({
           opacity={earthOpacityRef.current}
         />
       </primitive>
+      </group>
 
       {/* 사람 - 항상 표시 (전체 뷰에서도 보임) */}
       <group 
@@ -326,8 +328,8 @@ export function EarthModel({
       {!isResetting && (
         <mesh 
           ref={panoRef}
-          position={[panoPos[0], panoPos[1]+0.2, panoPos[2]]} 
-          scale={[0.7, 0.5, 0.7]}
+          position={[panoPos[0], panoPos[1]+0.3, panoPos[2]]} 
+          scale={[0.7, 0.9, 0.7]}
           visible={fadeReady}
           // raycast 비활성화로 이벤트 가로채지 않음
           raycast={() => null}
