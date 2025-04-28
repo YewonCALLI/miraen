@@ -15,6 +15,7 @@ interface SpaceSceneProps {
   onReset: () => void
 }
 
+
 export default function SpaceScene({
   onEarthClick,
   cameraTarget,
@@ -24,20 +25,28 @@ export default function SpaceScene({
 }: SpaceSceneProps) {
   const controlsRef = useRef<any>(null)
   const [isInteracting, setIsInteracting] = useState(false)
-  // 이전 카메라 상태 저장
   const prevCameraState = useRef<{
     position: THREE.Vector3
     target: THREE.Vector3
   } | null>(null)
-  // reset 애니메이터용 상태
   const [resetState, setResetState] = useState<{
     fromPos: THREE.Vector3
     fromTarget: THREE.Vector3
     toPos: THREE.Vector3
     toTarget: THREE.Vector3
   } | null>(null)
+  const [isResetting, setIsResetting] = useState(false)
+  const [pendingEarthClick, setPendingEarthClick] = useState<{
+    position: [number, number, number]
+    season: string
+  } | null>(null)
+  const [earthRotationComplete, setEarthRotationComplete] = useState(false)
+  
+  // 회전 상태 추가 (별자리와 파노라마 공통)
+  const [viewRotation, setViewRotation] = useState({ x: 0, y: 0 })
+  const isDraggingRef = useRef(false)
+  const lastMousePosRef = useRef({ x: 0, y: 0 })
 
-  // 지구 클릭 직전에 카메라 상태 한 번만 저장
   const handleEarthClickLocal = (pos: [number, number, number], season: string) => {
     if (controlsRef.current && !prevCameraState.current) {
       const ctrl = controlsRef.current
@@ -46,21 +55,33 @@ export default function SpaceScene({
         target: ctrl.target.clone(),
       }
     }
-    onEarthClick(pos, season)
+    setPendingEarthClick({ position: pos, season });
+    setEarthRotationComplete(false);
+  }
+  
+  const handleEarthRotationComplete = () => {
+    setEarthRotationComplete(true);
+    
+    if (pendingEarthClick) {
+      onEarthClick(pendingEarthClick.position, pendingEarthClick.season);
+    }
   }
 
-  // 돌아가기 버튼 클릭 → ResetAnimator 렌더 트리거
   const handleResetClick = () => {
     if (controlsRef.current && prevCameraState.current) {
+      setIsResetting(true)
+      
       const ctrl = controlsRef.current
       const fromPos = ctrl.object.position.clone()
       const fromTarget = ctrl.target.clone()
       const { position: toPos, target: toTarget } = prevCameraState.current
-      setResetState({ fromPos, fromTarget, toPos, toTarget })
+      
+      setTimeout(() => {
+        setResetState({ fromPos, fromTarget, toPos, toTarget })
+      }, 50);
     }
   }
 
-  // cameraTarget이 null→값 으로 바뀔 때 OrbitControls.target 업데이트 & 상호작용 리셋
   useEffect(() => {
     if (cameraTarget && controlsRef.current) {
       controlsRef.current.target.set(...cameraTarget)
@@ -69,31 +90,120 @@ export default function SpaceScene({
     setIsInteracting(false)
   }, [cameraTarget])
 
-  // ResetAnimator 완료 콜백
   const onResetFinished = () => {
-    // 상태 클리어
     prevCameraState.current = null
     setResetState(null)
+    setIsResetting(false)
+    setPendingEarthClick(null)
+    setEarthRotationComplete(false)
     onReset()
   }
 
-  // 카메라 이동 완료 시
   const onMoveFinished = () => {
     setIsInteracting(true)
   }
 
+  // 마우스/터치 이벤트 핸들러 (별자리와 파노라마 회전용)
+  useEffect(() => {
+    if (!isInteracting || !isLockedToSurface) return;
+    
+    const handleMouseDown = (e: MouseEvent) => {
+      isDraggingRef.current = true;
+      lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      
+      const dx = (e.clientX - lastMousePosRef.current.x) * 0.005;
+      const dy = (e.clientY - lastMousePosRef.current.y) * 0.005;
+      
+      setViewRotation(prev => ({
+        x: prev.x + dy,
+        y: prev.y + dx
+      }));
+      
+      lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+    };
+    
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+    
+    // 터치 이벤트 핸들러 (모바일 지원)
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        isDraggingRef.current = true;
+        lastMousePosRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDraggingRef.current || e.touches.length !== 1) return;
+      
+      const dx = (e.touches[0].clientX - lastMousePosRef.current.x) * 0.005;
+      const dy = (e.touches[0].clientY - lastMousePosRef.current.y) * 0.005;
+      
+      setViewRotation(prev => ({
+        x: prev.x + dy,
+        y: prev.y + dx
+      }));
+      
+      lastMousePosRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    };
+    
+    const handleTouchEnd = () => {
+      isDraggingRef.current = false;
+    };
+    
+    // OrbitControls 비활성화 (별자리/파노라마 회전 시)
+    if (controlsRef.current) {
+      controlsRef.current.enabled = false;
+    }
+    
+    // 이벤트 리스너 등록
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleTouchEnd);
+    
+    return () => {
+      // 이벤트 리스너 제거
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      
+      // OrbitControls 재활성화
+      if (controlsRef.current) {
+        controlsRef.current.enabled = true;
+      }
+    };
+  }, [isInteracting, isLockedToSurface]);
+
+  // 리셋 시 회전도 초기화
+  useEffect(() => {
+    if (isResetting) {
+      setViewRotation({ x: 0, y: 0 });
+    }
+  }, [isResetting]);
+
   return (
     <div className="absolute inset-0">
-      (
+      {isLockedToSurface && (
         <button
-          className="absolute top-4 left-4 z-10 px-4 py-2 bg-white text-white rounded"
+          className="absolute top-4 left-4 z-10 px-4 py-2 text-white rounded"
           onClick={handleResetClick}
         >
           돌아가기
         </button>
-      )
+      )}
       <Canvas camera={{ position: [0, 2, 5], fov: 50 }} shadows>
-      <fog attach="fog" args={['#220044', 0, 450]} />        
+      {/* <fog attach="fog" args={['#220044', 0, 450]} />         */}
       <ambientLight intensity={0.5} />
         <pointLight color='white' intensity={50} />
         <Suspense fallback={null}>
@@ -109,22 +219,28 @@ export default function SpaceScene({
             if (isLockedToSurface && activeSeason !== season) return null
             return (
               <EarthModel
-              key={season}
-              position={pos}
-              onClick={() => handleEarthClickLocal(pos, season)}
-              fadeReady={isInteracting && isLockedToSurface && activeSeason === season}
-              season = {season}
-            />
-
+                key={season}
+                position={pos}
+                onClick={() => {
+                  handleEarthClickLocal(pos, season);
+                }}
+                fadeReady={isLockedToSurface && activeSeason === season}
+                season={season}
+                isResetting={isResetting}
+                onRotationComplete={season === pendingEarthClick?.season ? handleEarthRotationComplete : undefined}
+                isSelected={season === pendingEarthClick?.season}
+                rotationX={viewRotation.x}
+                rotationY={viewRotation.y}
+              />
             )
           })}
-          {/* 계절 클릭→지구 궤도 이동 */}
-          <CameraAnimator
-            target={cameraTarget}
-            angleOffset={Math.PI/15}
-            onFinish={onMoveFinished}
-          />
-          {/* 돌아가기 클릭→이전 상태로 되돌리기 */}
+          {pendingEarthClick && earthRotationComplete && (
+            <CameraAnimator
+              target={cameraTarget}
+              angleOffset={Math.PI/15}
+              onFinish={onMoveFinished}
+            />
+          )}
           {resetState && (
             <ResetAnimator
               {...resetState}
@@ -135,21 +251,22 @@ export default function SpaceScene({
           <ConstellationLayer
             activeSeason={activeSeason}
             enableInteraction={isInteracting}
-            fadeOut={!!resetState} 
+            fadeOut={!!resetState || isResetting}
+            rotationX={viewRotation.x}
+            rotationY={viewRotation.y}
           />
         </Suspense>
         <OrbitControls
           ref={controlsRef}
           enablePan={false}
           enableZoom
-          enableRotate
+          enableRotate={!isInteracting || !isLockedToSurface}
         />
       </Canvas>
     </div>
   )
 }
 
-// 기존 CameraAnimator (지구 눌렀을 때)
 function CameraAnimator({
   target,
   angleOffset = 0,
@@ -183,7 +300,7 @@ function CameraAnimator({
     nightDir.applyAxisAngle(rotAxis, angleOffset)
 
     const offset = nightDir.multiplyScalar(0.15)
-    const endVec = tgt.clone().add(offset).setY(tgt.y + 0.38)
+    const endVec = tgt.clone().add(offset).setY(tgt.y + 0.4)
     endRef.current = endVec.sub(tgt)
   }, [target, angleOffset, camera])
 
@@ -253,4 +370,3 @@ function ResetAnimator({
 
   return null
 }
-

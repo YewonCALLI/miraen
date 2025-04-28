@@ -1,6 +1,6 @@
 // src/components/SpaceObjects.tsx
 
-import { useRef, useMemo } from 'react'
+import { useRef, useEffect, useMemo, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
@@ -59,17 +59,26 @@ function latLonToVector3(lat: number, lon: number, radius: number): [number, num
   ]
 }
 
-// 지구 모델 + 팬로라마 구체
 export function EarthModel({
   position,
   onClick,
   fadeReady,
   season,
+  isResetting,
+  onRotationComplete,
+  isSelected,
+  rotationX = 0,
+  rotationY = 0
 }: {
   position: [number, number, number]
   onClick: () => void
   fadeReady: boolean
   season: string
+  isResetting: boolean
+  onRotationComplete?: () => void
+  isSelected?: boolean
+  rotationX?: number
+  rotationY?: number
 }) {
   const seasonAngles: Record<string, number> = {
     spring: -Math.PI / 2,
@@ -83,9 +92,10 @@ export function EarthModel({
   const { scene: figureScene } = useGLTF('/models/earth/Figure.gltf')
 
   // 사람 위치 계산
-  const lat = 50.5665
+  const lat = 26.5665
   const lon = 90.0
   const surfaceRadius = 0.4
+  const figureRef = useRef<THREE.Group>(null!)
   const figurePos = useMemo(
     () => latLonToVector3(lat, lon, surfaceRadius),
     []
@@ -100,57 +110,237 @@ export function EarthModel({
 
   // 회전 그룹
   const groupRef = useRef<THREE.Group>(null!)
-  const targetAngle = seasonAngles[season] || 0
+  
+  // 파노라마 구체 참조
+  const panoRef = useRef<THREE.Mesh>(null!)
+  
+  // 목표 각도 계산 - 현재 각도에서 가장 가까운 각도로 조정
+  const [targetAngle, setTargetAngle] = useState(seasonAngles[season] || 0)
+  
+  // 처음 선택되었을 때 목표 각도 계산
+  useEffect(() => {
+    if (isSelected && groupRef.current) {
+      // 선택 상태가 바뀌면 회전 정렬 상태 초기화
+      setIsRotationAligned(false);
+      rotationAlignedRef.current = false;
+      
+      const currentAngle = groupRef.current.rotation.y;
+      const idealAngle = seasonAngles[season] || 0;
+      
+      // 현재 각도를 0~2π 범위 내로 정규화
+      let normalizedCurrent = currentAngle % (Math.PI * 2);
+      if (normalizedCurrent < 0) normalizedCurrent += Math.PI * 2;
+      
+      const normalizedIdeal = idealAngle % (Math.PI * 2);
+      
+      // 누적 회전 수 계산 (소수점 이하 제외)
+      let fullRotations;
+      if (currentAngle >= 0) {
+        fullRotations = Math.floor(currentAngle / (Math.PI * 2)) * (Math.PI * 2);
+      } else {
+        // 음수 각도일 경우 1회전 차이가 발생하므로 조정
+        fullRotations = Math.ceil(currentAngle / (Math.PI * 2)) * (Math.PI * 2);
+      }
+      
+      // 최종 목표 각도: 현재 누적 회전 + 계절 각도
+      setTargetAngle(fullRotations + normalizedIdeal);
+    }
+  }, [isSelected, season, seasonAngles]);
+  
+  // 회전 속도 상태
+  const rotationSpeed = useRef(0.2) // 기본 자전 속도
+  
+  // 회전 정렬 완료 추적 상태
+  const [isRotationAligned, setIsRotationAligned] = useState(false)
+  const rotationAlignedRef = useRef(false)
+  
+  // 애니메이션을 위한 ref
+  const earthOpacityRef = useRef(1)
+  const humanOpacityRef = useRef(1)
+  const panoOpacityRef = useRef(0)
+  
+  // 리셋 감지 시 즉시 상태 변경을 위한 state 추가
+  const [showPanoAndHuman, setShowPanoAndHuman] = useState(false)
+  
+  // 자전 여부 결정
+  useEffect(() => {
+    // 선택된 지구는 자전 중지 후 정렬 시작
+    if (isSelected && !isResetting) {
+      rotationSpeed.current = 0;
+      // 정렬 상태 초기화는 목표 각도 계산 useEffect에서 처리
+      console.log('1 : 줌인')
+    }
+    // 리셋 중: 모든 지구 자전 복원
+    else if (isResetting) {
+      setShowPanoAndHuman(false);
+      rotationSpeed.current = 0.2;
+      setIsRotationAligned(false);
+      rotationAlignedRef.current = false;
+      console.log('2 : 줌아웃')
+    }
+    // 카메라 이동 완료 후: 파노라마 표시
+    else if (fadeReady && !isResetting) {
+      setShowPanoAndHuman(true);
+      rotationSpeed.current = 0;
+      console.log('3')
+    }
+    // 기본 상태: 자전 유지
+    else if (!isSelected && !fadeReady && !isResetting) {
+      rotationSpeed.current = 0.2;
+      console.log('4 : 디폴트')
+    }
+  }, [isResetting, fadeReady, isSelected]);
+
+  useEffect(() => {
+    if (fadeReady) {
+      // 카메라 이동 완료 시 - 정렬 작업 중지
+      setIsRotationAligned(true);
+      rotationAlignedRef.current = true;
+    } else if (isResetting) {
+      // 리셋 시 정렬 상태 초기화
+      setIsRotationAligned(false);
+      rotationAlignedRef.current = false;
+    }
+  }, [fadeReady, isResetting]);
+
+  useEffect(() => {
+    if (fadeReady) {
+      // 파노라마 구체 회전
+      if (panoRef.current) {
+        panoRef.current.rotation.x = rotationX;
+        panoRef.current.rotation.y = rotationY;
+      }
+      
+      // 사람 모델 회전 - 카메라가 항상 사람을 바라보는 대신 사람도 회전
+      if (figureRef.current) {
+        figureRef.current.rotation.x = rotationX;
+        figureRef.current.rotation.y = rotationY;
+      }
+    }
+  }, [rotationX, rotationY, fadeReady]);
+
+  // 외부에서 전달된 회전 적용 (파노라마 구체)
+  useEffect(() => {
+    if (panoRef.current && fadeReady) {
+      panoRef.current.rotation.x = rotationX;
+      panoRef.current.rotation.y = rotationY;
+    }
+  }, [rotationX, rotationY, fadeReady]);
 
   useFrame((_, delta) => {
-    if (!fadeReady) {
-      // 계속 자전
-      groupRef.current.rotation.y += 0
-    } else {
-      // 선택 계절 각도로 고정
+    if (!groupRef.current) return
+    
+    if (isSelected && !rotationAlignedRef.current && !fadeReady) {
+      // 선택된 지구: 타겟 각도로 정렬
+      // 각도 차이가 클수록 더 빠르게 회전하도록 속도 조절
+      const diff = targetAngle - groupRef.current.rotation.y;
+      const absDiff = Math.abs(diff);
+      const damping = Math.max(1, Math.min(5, 1 + absDiff)); // 1~5 범위의 댐핑 값
+      
       groupRef.current.rotation.y = THREE.MathUtils.damp(
         groupRef.current.rotation.y,
         targetAngle,
-        5,
+        damping,
+        delta
+      );
+      
+      // 회전이 거의 완료되었는지 확인
+      const isAligned = Math.abs(groupRef.current.rotation.y - targetAngle) < 0.15;
+      if (isAligned && !rotationAlignedRef.current) {
+        rotationAlignedRef.current = true;
+        setIsRotationAligned(true);
+        // 완전히 정렬되면 정확한 타겟 각도로 설정
+        groupRef.current.rotation.y = targetAngle;
+        // 회전 완료 콜백 호출
+        onRotationComplete?.();
+      }
+    } else if (!fadeReady && !isResetting && !isSelected) {
+      // 선택되지 않은 지구: 계속 자전
+      groupRef.current.rotation.y += rotationSpeed.current * delta;
+    }
+    
+
+    if (isResetting) {
+      // 리셋 중: 지구 fade in, 파노라마와 사람 즉시 사라짐
+      earthOpacityRef.current = THREE.MathUtils.damp(
+        earthOpacityRef.current,
+        1, // 지구 완전 불투명
+        10,
         delta
       )
+      panoOpacityRef.current = 0; // 파노라마 즉시 투명
+
+    } else if (fadeReady) {
+      // 카메라 이동 완료: 지구 즉시 숨김, 파노라마 fade in
+      earthOpacityRef.current = THREE.MathUtils.damp(
+        earthOpacityRef.current,
+        0, // 지구 완전 불투명
+        10,
+        delta
+      )
+      panoOpacityRef.current = THREE.MathUtils.damp(
+        panoOpacityRef.current,
+        1, // 파노라마 완전 불투명
+        10,
+        delta
+      )
+    } else {
+      // 기본 상태: 지구만 보임
+      earthOpacityRef.current = THREE.MathUtils.damp(
+        earthOpacityRef.current,
+        1,
+        10,
+        delta
+      )
+      panoOpacityRef.current = 0; // 파노라마 즉시 투명
     }
   })
 
   return (
     <group position={position} ref={groupRef} onClick={onClick}>
-      {/* 지구 */}
-      {!fadeReady && (
-        <primitive object={earthScene.clone()} scale={[0.08, 0.08, 0.08]} />
-      )}
+      {/* 지구 - 항상 렌더링하고 불투명도로 제어 */}
+      <primitive 
+        object={earthScene.clone()} 
+        scale={[0.084, 0.084, 0.084]} 
+        visible={earthOpacityRef.current > 0.01}
+      >
+        <meshStandardMaterial
+          transparent
+          opacity={earthOpacityRef.current}
+        />
+      </primitive>
 
-      {/* 사람 */}
-      <group position={figurePos}>
-        <primitive object={figureScene.clone()} scale={[0.003, 0.003, 0.003]} />
+      {/* 사람 - 항상 표시 (전체 뷰에서도 보임) */}
+      <group 
+        position={[figurePos[0], figurePos[1]+0.04, figurePos[2]]} 
+        ref={figureRef}
+        raycast={() => null}
+      >
+        <primitive 
+          object={figureScene.clone()} 
+          scale={[0.006, 0.006, 0.006]} 
+        />
       </group>
 
-      {/* 파노라마 구체 */}
-      {fadeReady && (
-        <mesh position={[panoPos[0], panoPos[1]-0.04, panoPos[2]]} scale={[0.3, 0.3, 0.3]}>
+      {/* 파노라마 구체 - 상태에 따라 표시/숨김 */}
+      {!isResetting && (
+        <mesh 
+          ref={panoRef}
+          position={[panoPos[0], panoPos[1]+0.2, panoPos[2]]} 
+          scale={[0.7, 0.5, 0.7]}
+          visible={fadeReady}
+          // raycast 비활성화로 이벤트 가로채지 않음
+          raycast={() => null}
+        >
           <sphereGeometry args={[1, 128, 128]} />
           <meshBasicMaterial
             map={panoTex}
             side={THREE.DoubleSide}
             transparent={true}
+            opacity={panoOpacityRef.current}
             alphaTest={0.2}
           />
-          <spotLight
-            position={[figurePos[0], figurePos[1] - 0.1, figurePos[2]]}
-            target-position={[figurePos[0], panoPos[1], figurePos[2]]} // 위를 향하도록
-            angle={0.5}
-            penumbra={0.9}
-            intensity={5}
-            distance={1.2}
-            color="#ff0000"
-          />
-
         </mesh>
-        
       )}
     </group>
   )

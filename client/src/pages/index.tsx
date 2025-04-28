@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import SpaceScene from '@/scenes/SpaceScene'
+import SpaceScene from '@/scenes/SpaceScene' // 경로 수정
 
 export default function HomePage() {
   const [cameraTarget, setCameraTarget] = useState<[number, number, number] | null>(null)
@@ -17,7 +17,6 @@ export default function HomePage() {
     setActiveSeason(null)
     setIsLockedToSurface(false)
   }
-
 
   return (
     <div className="fixed inset-0 bg-black">
