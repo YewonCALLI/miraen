@@ -103,7 +103,6 @@ export default function SpaceScene({
     setIsInteracting(true)
   }
 
-  // 마우스/터치 이벤트 핸들러 (별자리와 파노라마 회전용)
   useEffect(() => {
     if (!isInteracting || !isLockedToSurface) return;
     
@@ -156,12 +155,10 @@ export default function SpaceScene({
       isDraggingRef.current = false;
     };
     
-    // OrbitControls 비활성화 (별자리/파노라마 회전 시)
     if (controlsRef.current) {
       controlsRef.current.enabled = false;
     }
     
-    // 이벤트 리스너 등록
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);

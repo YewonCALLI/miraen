@@ -46,12 +46,12 @@ export function ConstellationLayer({
     // 위치에 따른 회전 방향 조정
     if (posX > 1) {  // 뒷쪽
       xFactor = 1; 
-      yFactor = -1;  
+      yFactor = 1;  
       console.log('선택1')
 
     } else if (posX < -1) {  // 앞쪽
       xFactor = -1; 
-      yFactor = -1;  
+      yFactor = 1;  
       console.log('선택2')
 
     } else if (posZ > 1) {  //오른쪽
