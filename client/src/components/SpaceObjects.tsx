@@ -87,11 +87,9 @@ export function EarthModel({
     winter: 0,
   }
 
-  // 모델 로드
   const { scene: earthScene } = useGLTF('/models/earth/earth.gltf')
   const { scene: figureScene } = useGLTF('/models/earth/Figure.gltf')
 
-  // 사람 위치 계산
   const lat = 26.5665
   const lon = 90.0
   const surfaceRadius = 0.4
@@ -101,54 +99,44 @@ export function EarthModel({
     []
   )
 
-  // 파노라마 텍스처 & 위치
   const panoTex = useTexture('/textures/Panorama 1.png')
   const panoPos = useMemo<[number, number, number]>(
     () => [figurePos[0], figurePos[1], figurePos[2]],
     [figurePos]
   )
 
-  // 회전 그룹
   const groupRef = useRef<THREE.Group>(null!)
   
-  // 파노라마 구체 참조
   const panoRef = useRef<THREE.Mesh>(null!)
   
-  // 목표 각도 계산 - 현재 각도에서 가장 가까운 각도로 조정
   const [targetAngle, setTargetAngle] = useState(seasonAngles[season] || 0)
   
-  // 처음 선택되었을 때 목표 각도 계산
   useEffect(() => {
     if (isSelected && groupRef.current) {
-      // 선택 상태가 바뀌면 회전 정렬 상태 초기화
       setIsRotationAligned(false);
       rotationAlignedRef.current = false;
       
       const currentAngle = groupRef.current.rotation.y;
       const idealAngle = seasonAngles[season] || 0;
       
-      // 현재 각도를 0~2π 범위 내로 정규화
       let normalizedCurrent = currentAngle % (Math.PI * 2);
       if (normalizedCurrent < 0) normalizedCurrent += Math.PI * 2;
       
       const normalizedIdeal = idealAngle % (Math.PI * 2);
       
-      // 누적 회전 수 계산 (소수점 이하 제외)
       let fullRotations;
       if (currentAngle >= 0) {
         fullRotations = Math.floor(currentAngle / (Math.PI * 2)) * (Math.PI * 2);
       } else {
-        // 음수 각도일 경우 1회전 차이가 발생하므로 조정
         fullRotations = Math.ceil(currentAngle / (Math.PI * 2)) * (Math.PI * 2);
       }
       
-      // 최종 목표 각도: 현재 누적 회전 + 계절 각도
       setTargetAngle(fullRotations + normalizedIdeal);
     }
   }, [isSelected, season, seasonAngles]);
   
   // 회전 속도 상태
-  const rotationSpeed = useRef(0.2) // 기본 자전 속도
+  const rotationSpeed = useRef(0.2)
   
   // 회전 정렬 완료 추적 상태
   const [isRotationAligned, setIsRotationAligned] = useState(false)
@@ -193,11 +181,9 @@ export function EarthModel({
 
   useEffect(() => {
     if (fadeReady) {
-      // 카메라 이동 완료 시 - 정렬 작업 중지
       setIsRotationAligned(true);
       rotationAlignedRef.current = true;
     } else if (isResetting) {
-      // 리셋 시 정렬 상태 초기화
       setIsRotationAligned(false);
       rotationAlignedRef.current = false;
     }
@@ -205,13 +191,11 @@ export function EarthModel({
 
   useEffect(() => {
     if (fadeReady) {
-      // 파노라마 구체 회전
       if (panoRef.current) {
         panoRef.current.rotation.x = rotationX;
         panoRef.current.rotation.y = rotationY;
       }
       
-      // 사람 모델 회전 - 카메라가 항상 사람을 바라보는 대신 사람도 회전
       if (figureRef.current) {
         figureRef.current.rotation.x = rotationX;
         figureRef.current.rotation.y = rotationY;
@@ -249,19 +233,15 @@ export function EarthModel({
       if (isAligned && !rotationAlignedRef.current) {
         rotationAlignedRef.current = true;
         setIsRotationAligned(true);
-        // 완전히 정렬되면 정확한 타겟 각도로 설정
         groupRef.current.rotation.y = targetAngle;
-        // 회전 완료 콜백 호출
         onRotationComplete?.();
       }
     } else if (!fadeReady && !isResetting && !isSelected) {
-      // 선택되지 않은 지구: 계속 자전
       groupRef.current.rotation.y += rotationSpeed.current * delta;
     }
     
 
     if (isResetting) {
-      // 리셋 중: 지구 fade in, 파노라마와 사람 즉시 사라짐
       earthOpacityRef.current = THREE.MathUtils.damp(
         earthOpacityRef.current,
         1, // 지구 완전 불투명

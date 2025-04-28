@@ -254,6 +254,7 @@ export default function SpaceScene({
             fadeOut={!!resetState || isResetting}
             rotationX={viewRotation.x}
             rotationY={viewRotation.y}
+            rotationZ={viewRotation.x}
           />
         </Suspense>
         <OrbitControls
