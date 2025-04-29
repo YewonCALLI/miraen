@@ -1,9 +1,43 @@
 // src/components/SpaceObjects.tsx
 
 import { useRef, useEffect, useMemo, useState } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useThree,  extend  } from '@react-three/fiber'
 import { useGLTF, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
+import { Line, Text, Billboard } from '@react-three/drei'
+
+const horizonShader = {
+  uniforms: {
+    uMap:       { value: null },
+    glowColor:  { value: new THREE.Color('#27548A') },
+    glowFactor: { value: 1 },
+  },
+  vertexShader: `
+    varying vec3 vNormal;
+    varying vec2 vUv;
+    void main(){
+      vNormal = normalize(normalMatrix * normal);
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D uMap;
+    uniform vec3 glowColor;
+    uniform float glowFactor;
+    varying vec3 vNormal;
+    varying vec2 vUv;
+    void main(){
+      vec4 base = texture2D(uMap, vUv);
+      float mask = base.a * smoothstep(0.3, 0.05, 1.0 - abs(vNormal.y));
+      vec3 col = base.rgb + glowColor * glowFactor * mask;
+      gl_FragColor = vec4(col, base.a);
+    }
+  `,
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+}
 
 // 태양
 export function Sun() {
@@ -71,9 +105,10 @@ export function EarthModel({
   rotationY = 0
 }: {
   position: [number, number, number]
+  season: 'spring' | 'summer' | 'fall' | 'winter'
   onClick: () => void
   fadeReady: boolean
-  season: string
+
   isResetting: boolean
   onRotationComplete?: () => void
   isSelected?: boolean
@@ -91,13 +126,20 @@ export function EarthModel({
   const { scene: figureScene } = useGLTF('/models/earth/Figure.gltf')
 
   const lat = 26.5665
-  const lon = 90.0
-  const surfaceRadius = 0.4
+  const lon = 36.0
+  const surfaceRadius = 0.43
   const figureRef = useRef<THREE.Group>(null!)
   const figurePos = useMemo(
     () => latLonToVector3(lat, lon, surfaceRadius),
     []
   )
+
+  const seasonLabels: Record<string, string> = {
+    spring: '겨울',
+    summer: '가을',
+    fall:   '여름',
+    winter: '봄',
+  }
 
   const panoTex = useTexture('/textures/Panorama 1.png')
   const panoPos = useMemo<[number, number, number]>(
@@ -105,11 +147,20 @@ export function EarthModel({
     [figurePos]
   )
 
+  const glowMat = useMemo(() => {
+    const m = new THREE.ShaderMaterial(horizonShader)
+    m.uniforms.uMap.value = panoTex
+    m.side        = THREE.DoubleSide
+    return m
+  }, [panoTex])
+
   const groupRef = useRef<THREE.Group>(null!)
   
   const panoRef = useRef<THREE.Mesh>(null!)
   
   const [targetAngle, setTargetAngle] = useState(seasonAngles[season] || 0)
+
+  const { camera } = useThree()
   
   useEffect(() => {
     if (isSelected && groupRef.current) {
@@ -203,6 +254,8 @@ export function EarthModel({
     }
   }, [rotationX, rotationY, fadeReady]);
 
+  
+
   // 외부에서 전달된 회전 적용 (파노라마 구체)
   useEffect(() => {
     if (panoRef.current && fadeReady) {
@@ -210,6 +263,9 @@ export function EarthModel({
       panoRef.current.rotation.y = rotationY;
     }
   }, [rotationX, rotationY, fadeReady]);
+
+
+  
 
   useFrame((_, delta) => {
     if (!groupRef.current) return
@@ -277,53 +333,90 @@ export function EarthModel({
   })
 
   return (
-    <group position={position} ref={groupRef} onClick={onClick}>
-      {/* 지구 - 항상 렌더링하고 불투명도로 제어 */}
-      <group rotation={[0, Math.PI/4 * 1.2, 0]}>
-      <primitive 
-        object={earthScene.clone()} 
-        scale={[0.084, 0.084, 0.084]} 
-        visible={earthOpacityRef.current > 0.01}
-      >
-        <meshStandardMaterial
-          transparent
-          opacity={earthOpacityRef.current}
-        />
-      </primitive>
-      </group>
-
-      {/* 사람 - 항상 표시 (전체 뷰에서도 보임) */}
-      <group 
-        position={[figurePos[0], figurePos[1]+0.04, figurePos[2]]} 
-        ref={figureRef}
-        raycast={() => null}
-      >
-        <primitive 
-          object={figureScene.clone()} 
-          scale={[0.006, 0.006, 0.006]} 
-        />
-      </group>
-
-      {/* 파노라마 구체 - 상태에 따라 표시/숨김 */}
-      {!isResetting && (
-        <mesh 
-          ref={panoRef}
-          position={[panoPos[0], panoPos[1]+0.3, panoPos[2]]} 
-          scale={[0.7, 0.9, 0.7]}
-          visible={fadeReady}
-          // raycast 비활성화로 이벤트 가로채지 않음
-          raycast={() => null}
-        >
-          <sphereGeometry args={[1, 128, 128]} />
-          <meshBasicMaterial
-            map={panoTex}
-            side={THREE.DoubleSide}
-            transparent={true}
-            opacity={panoOpacityRef.current}
-            alphaTest={0.2}
+    // 최상위 그룹: onClick만 걸어두고 position/ref는 내부로 이동
+    <group onClick={onClick}>
+      {/* 1) 지구·피규어·파노라마: position/ref 그대로 유지 */}
+      <group position={position} ref={groupRef}>
+        {/* 지구 기울기 + 시즌 회전 */}
+        <group rotation={[Math.PI * 23.5 / 180, Math.PI / 4 * 1.2, 0]}>
+          <primitive 
+            object={earthScene.clone()} 
+            scale={[0.084, 0.084, 0.084]} 
+            visible={earthOpacityRef.current > 0.01}
+          >
+            <meshStandardMaterial
+              transparent
+              opacity={earthOpacityRef.current}
+            />
+          </primitive>
+          <Line
+            points={[
+              [0, -0.5, 0],
+              [0,  0.5, 0]
+            ]}
+            color="white"
+            lineWidth={2}
           />
-        </mesh>
-      )}
+  
+          {/* 피규어: static tilt 그룹 안에 yaw 동적 그룹 */}
+          <group position={[figurePos[0], figurePos[1] - 0.05, figurePos[2]]}>
+            {/* ① static tilt 전용 그룹 */}
+            <group rotation={[0, -23.5 * Math.PI / 180 - 0.5, 0]}>
+              {/* ② yaw 동적 그룹 */}
+              <group ref={figureRef} raycast={() => null}>
+                <primitive 
+                  object={figureScene.clone()} 
+                  scale={[0.006, 0.006, 0.006]} 
+                />
+              </group>
+            </group>
+          </group>
+        </group>
+  
+        {!isResetting && (
+          <>
+          <mesh 
+            ref={panoRef}
+            position={[panoPos[0], panoPos[1] + 0.3, panoPos[2]]} 
+            scale={[0.7, 0.9, 0.7]}
+            visible={fadeReady}
+            raycast={() => null}
+          >
+            <sphereGeometry args={[1, 128, 128]} />
+            <meshBasicMaterial
+              map={panoTex}
+              side={THREE.DoubleSide}
+              transparent
+              opacity={panoOpacityRef.current}
+              alphaTest={0.2}
+            />
+          </mesh>
+
+            </>
+          )}
+
+      </group>
+  
+      {/* 2) Billboard 전용 그룹: position만 상속, 회전은 전혀 없음 */}
+      <group
+        position={[
+          position[0],
+          position[1] + surfaceRadius + 0.2,
+          position[2],
+        ]}
+      >
+        <Billboard>
+          <Text
+            fontSize={0.08}
+            color="white"
+            anchorX="center"
+            anchorY="bottom"
+          >
+            {seasonLabels[season]}
+          </Text>
+        </Billboard>
+      </group>
     </group>
   )
+  
 }

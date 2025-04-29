@@ -6,15 +6,16 @@ import * as THREE from 'three'
 import { Sun, Stars, EarthModel } from '@/components/SpaceObjects'
 import { ConstellationLayer } from '@/components/ConstellationLayer'
 
+type Season = 'spring' | 'summer' | 'fall' | 'winter'
+const SEASONS: Season[] = ['spring', 'summer', 'fall', 'winter']
 
 interface SpaceSceneProps {
-  onEarthClick: (pos: [number, number, number], season: string) => void
+  onEarthClick: (pos: [number, number, number], season: Season) => void
   cameraTarget: [number, number, number] | null
-  activeSeason: string | null
+  activeSeason: Season | null
   isLockedToSurface: boolean
   onReset: () => void
 }
-
 
 export default function SpaceScene({
   onEarthClick,
@@ -38,7 +39,7 @@ export default function SpaceScene({
   const [isResetting, setIsResetting] = useState(false)
   const [pendingEarthClick, setPendingEarthClick] = useState<{
     position: [number, number, number]
-    season: string
+    season: Season
   } | null>(null)
   const [earthRotationComplete, setEarthRotationComplete] = useState(false)
   
@@ -55,7 +56,8 @@ export default function SpaceScene({
         target: ctrl.target.clone(),
       }
     }
-    setPendingEarthClick({ position: pos, season });
+    // Type cast season to Season since we know it's one of the valid values
+    setPendingEarthClick({ position: pos, season: season as Season });
     setEarthRotationComplete(false);
   }
   
@@ -206,7 +208,7 @@ export default function SpaceScene({
         <Suspense fallback={null}>
           <Sun />
           <Stars />
-          {['spring', 'summer', 'fall', 'winter'].map((season, i) => {
+          {SEASONS.map((season, i) => {
             const ang = (i * Math.PI) / 2
             const pos: [number, number, number] = [
               Math.cos(ang) * 2,
