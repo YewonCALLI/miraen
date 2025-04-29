@@ -106,6 +106,8 @@ export default function Page() {
     Organs_pose: 0,     // 장기 정지 애니메이션
   }
 
+  
+
   const getModelScale = () => {
     if (modelType === 'organ' && animState === 'pose') {
       return 0.5;
