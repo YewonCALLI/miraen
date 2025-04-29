@@ -207,7 +207,7 @@ export function EarthModel({
     if (isSelected && !isResetting) {
       rotationSpeed.current = 0;
       // 정렬 상태 초기화는 목표 각도 계산 useEffect에서 처리
-      console.log('1 : 줌인')
+      // console.log('1 : 줌인')
     }
     // 리셋 중: 모든 지구 자전 복원
     else if (isResetting) {
@@ -215,18 +215,18 @@ export function EarthModel({
       rotationSpeed.current = 0.2;
       setIsRotationAligned(false);
       rotationAlignedRef.current = false;
-      console.log('2 : 줌아웃')
+      // console.log('2 : 줌아웃')
     }
     // 카메라 이동 완료 후: 파노라마 표시
     else if (fadeReady && !isResetting) {
       setShowPanoAndHuman(true);
       rotationSpeed.current = 0;
-      console.log('3')
+      // console.log('3')
     }
     // 기본 상태: 자전 유지
     else if (!isSelected && !fadeReady && !isResetting) {
       rotationSpeed.current = 0.2;
-      console.log('4 : 디폴트')
+      // console.log('4 : 디폴트')
     }
   }, [isResetting, fadeReady, isSelected]);
 

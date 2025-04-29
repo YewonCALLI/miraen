@@ -84,7 +84,6 @@ export function ConstellationLayer({
       if ((activeSeason === 'spring' || activeSeason === 'fall')) {
         meshRef.current.rotation.z = rotationZ * zFactor;
         meshRef.current.rotation.y = rotationY * yFactor;
-        console.log('이것');
       } else {
         meshRef.current.rotation.x = rotationX * xFactor;
         meshRef.current.rotation.y = rotationY * yFactor;
