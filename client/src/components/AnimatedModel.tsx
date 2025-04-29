@@ -22,24 +22,23 @@ export default function AnimatedModel({
 }: AnimatedModelProps) {
   const group = useRef<Group>(null)
   
-  const cacheKey = removeMuscleLayer 
-    ? `${url}#bone` 
-    : `${url}#muscle`
+  // 모델 URL에 따라 적절한 캐시 키 생성
+  let cacheKey = url
+  
+  // bone 모델일 경우에만 특별한 처리
+  if (removeMuscleLayer) {
+    cacheKey = `${url}#bone`
+  }
   
   const { scene, animations } = useGLTF(cacheKey)
   const { actions, mixer } = useAnimations(animations, group)
 
   useEffect(() => {
-    if (!removeMuscleLayer) {
-      useGLTF.clear(`${url}#bone`)
-    } else {
-      useGLTF.clear(`${url}#muscle`)
-    }
-    
+    // 컴포넌트 언마운트 시 캐시 정리
     return () => {
       useGLTF.clear(cacheKey)
     }
-  }, [url, cacheKey, removeMuscleLayer])
+  }, [cacheKey])
 
   useEffect(() => {
     if (!animations || animations.length === 0) return
@@ -75,6 +74,7 @@ export default function AnimatedModel({
     const modelRoot = scene.children[0]
     if (!modelRoot || !modelRoot.children) return
 
+    // bone 모델일 경우에 muscle 레이어 제거
     if (removeMuscleLayer) {
       const muscleLayer = modelRoot.children[0]
       
@@ -84,13 +84,14 @@ export default function AnimatedModel({
       }
     }
 
+    // 모든 메시에 그림자 속성 설정
     scene.traverse((obj) => {
       if ((obj as any).isMesh) {
         obj.castShadow = true
         obj.receiveShadow = true
       }
     })
-  }, [scene, removeMuscleLayer])
+  }, [scene, removeMuscleLayer, url])
 
   useFrame((state, delta) => {
     if (mixer) {

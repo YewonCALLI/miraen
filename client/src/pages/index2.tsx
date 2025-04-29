@@ -2,10 +2,9 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import AnimatedModel from '../components/AnimatedModel'
 import { useState, useEffect } from 'react'
-import { AccumulativeShadows, RandomizedLight } from '@react-three/drei'
 
 
-type ModelType = 'boy' | 'muscle' | 'bone'
+type ModelType = 'boy' | 'muscle' | 'bone' | 'organ' // 'organ' 타입 추가
 type AnimationState = 'walk' | 'pose'
 
 // 모든 가능한 모델 URL을 미리 계산
@@ -13,8 +12,11 @@ const preloadModelUrls = [
   '/models/Anatomy/Boy_Walking.gltf',
   '/models/Anatomy/Boy_Pose.gltf',
   '/models/Anatomy/Muscle_Walking.gltf',
-  '/models/Anatomy/Muscle_Pose.gltf'
+  '/models/Anatomy/Muscle_Pose.gltf',
+  '/models/Anatomy/Organs/Organs_walking.gltf',
+  '/models/Anatomy/Organs/Organs_pose.gltf'
 ]
+
 
 // 각 URL에 대해 bone 버전도 캐시 키 추가
 const allPreloadUrls = [
@@ -56,15 +58,42 @@ export default function Page() {
 
   // 실제 로드할 모델 키 (bone도 muscle 로드)
   const getModelKey = () => {
-    const base = modelType === 'bone' ? 'Muscle' : modelType.charAt(0).toUpperCase() + modelType.slice(1)
+    // 기본 모델 타입 결정 (bone은 muscle 기반)
+    let base
+    if (modelType === 'bone') {
+      base = 'Muscle'
+    } else if (modelType === 'organ') {
+      base = 'Organs'
+    } else {
+      base = modelType.charAt(0).toUpperCase() + modelType.slice(1)
+    }
+    
+    // 애니메이션 상태에 따른 접미사
     const anim = animState === 'walk' ? 'Walking' : 'Pose'
+    
+    // 장기 모델의 경우 경로가 다름
+    if (modelType === 'organ') {
+      // 장기 모델 경로에는 소문자 'walking' 또는 'pose' 사용
+      const animLowercase = animState === 'walk' ? 'walking' : 'pose'
+      return `${base}_${animLowercase}` 
+    }
+    
     return `${base}_${anim}`
   }
 
   const modelKey = getModelKey()
-  const modelUrl = `/models/Anatomy/${modelKey}.gltf`
+  
+  // 모델 URL 결정 - 장기 모델은 경로가 다름
+  const getModelUrl = () => {
+    if (modelType === 'organ') {
+      return `/models/Anatomy/Organs/${modelKey}.gltf`
+    } else {
+      return `/models/Anatomy/${modelKey}.gltf`
+    }
+  }
+  
+  const modelUrl = getModelUrl()
   const lightIntensity = modelType === 'boy' ? 0.2 : 3.0
-
 
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
@@ -72,6 +101,20 @@ export default function Page() {
     Boy_Pose: 1,
     Muscle_Walking: 1,
     Muscle_Pose: 0,
+    Organs_walking: 3,  // 장기 걷기 애니메이션
+    Organs_pose: 3,     // 장기 정지 애니메이션
+  }
+
+  const getModelScale = () => {
+    if (modelType === 'organ' && animState === 'pose') {
+      return 0.69;
+    }
+    return 0.5;
+  }
+
+  // 위치도 필요하다면 조정 가능
+  const getModelPosition = (): [number, number, number] => {
+    return [0, -0.2, 0];
   }
 
   const animIndex = animIndexMap[modelKey] ?? 0
@@ -132,17 +175,15 @@ export default function Page() {
           shadow-camera-bottom={-1}
         />
 
-
-
         {!isLoading && (
           <AnimatedModel
-            key={`${modelUrl}-${modelType}-${animState}`} // ← 모델 상태 전체 반영
+            key={`${modelUrl}-${modelType}-${animState}`}
             url={modelUrl}
             animIndex={animIndex}
-            scale={0.5}
-            position={[0, -0.2, 0]}
+            scale={getModelScale()}
+            position={getModelPosition()}
             loop={true}
-            removeMuscleLayer={modelType === 'bone'} // ← bone일 때만 제거
+            removeMuscleLayer={modelType === 'bone'} // bone일 때만 muscle 레이어 제거
           />
         )}
 
@@ -186,7 +227,7 @@ export default function Page() {
 
         {/* 모델 타입 버튼 */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-          {(['boy', 'muscle', 'bone'] as ModelType[]).map((type) => (
+          {(['boy', 'muscle', 'bone', 'organ'] as ModelType[]).map((type) => (
             <button
               key={type}
               onClick={() => setModelType(type)}
@@ -202,11 +243,12 @@ export default function Page() {
               }}
               disabled={isLoading}
             >
-              {type === 'boy' ? '피부' : type === 'muscle' ? '근육' : '뼈'}
+              {type === 'boy' ? '피부' : 
+               type === 'muscle' ? '근육' : 
+               type === 'bone' ? '뼈' : '장기'}
             </button>
           ))}
         </div>
-
       </div>
     </div>
   )
