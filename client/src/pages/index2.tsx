@@ -101,13 +101,13 @@ export default function Page() {
     Boy_Pose: 1,
     Muscle_Walking: 1,
     Muscle_Pose: 0,
-    Organs_walking: 3,  // 장기 걷기 애니메이션
-    Organs_pose: 3,     // 장기 정지 애니메이션
+    Organs_walking: 1,  // 장기 걷기 애니메이션
+    Organs_pose: 0,     // 장기 정지 애니메이션
   }
 
   const getModelScale = () => {
     if (modelType === 'organ' && animState === 'pose') {
-      return 0.69;
+      return 0.5;
     }
     return 0.5;
   }
