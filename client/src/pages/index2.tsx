@@ -13,7 +13,7 @@ const preloadModelUrls = [
   '/models/Anatomy/Boy_Pose.gltf',
   '/models/Anatomy/Muscle_Walking.gltf',
   '/models/Anatomy/Muscle_Pose.gltf',
-  '/models/Anatomy/Organs/Organs_walking.gltf',
+  '/models/Anatomy/Organs/Organs_Walking.gltf',
   '/models/Anatomy/Organs/Organs_pose.gltf'
 ]
 
@@ -106,7 +106,7 @@ export default function Page() {
     Organs_pose: 0,     // 장기 정지 애니메이션
   }
 
-  
+
 
   const getModelScale = () => {
     if (modelType === 'organ' && animState === 'pose') {
