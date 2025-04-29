@@ -13,7 +13,7 @@ const preloadModelUrls = [
   '/models/Anatomy/Boy_Pose.gltf',
   '/models/Anatomy/Muscle_Walking.gltf',
   '/models/Anatomy/Muscle_Pose.gltf',
-  '/models/Anatomy/Organs/Organs_Walking.gltf',
+  '/models/Anatomy/Organs/Organs_walking.gltf',
   '/models/Anatomy/Organs/Organs_pose.gltf'
 ]
 
