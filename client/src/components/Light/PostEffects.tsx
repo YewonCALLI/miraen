@@ -1,4 +1,3 @@
-'use client';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 
 export default function PostEffects() {
