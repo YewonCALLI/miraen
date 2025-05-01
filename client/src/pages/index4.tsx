@@ -18,7 +18,7 @@ function SafePostEffects() {
 export default function HomePage() {
   return (
     <div className="w-screen h-screen bg-black">
-      <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
+      <Canvas camera={{ position: [-3, 3, 3], fov: 50 }}>
         <ambientLight intensity={2.0} />
         {/* <CustomEnvironment /> */}
         <Environment
@@ -29,7 +29,7 @@ export default function HomePage() {
         />
 
         <OpticalLab />
-        <OrbitControls maxPolarAngle={Math.PI/2} maxDistance={10.0}/>
+        <OrbitControls maxPolarAngle={Math.PI/2} maxDistance={7.0}/>
         <SafePostEffects />
         {/* <Lightformer intensity={2} rotation-y={-Math.PI / 2} position={[50, 2, 0]} scale={[100, 2, 1]} /> */}
 
