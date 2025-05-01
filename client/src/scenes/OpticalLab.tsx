@@ -10,6 +10,7 @@ export function OpticalLab() {
   const mirrorPosition = new THREE.Vector3(1, 0, 0);
   const mirrorRotation = new THREE.Euler(Math.PI/2, 5*Math.PI/4, 0);
   
+  
   const mirrorNormal = useMemo(() => {
     const normal = new THREE.Vector3(0, 0, 1);
     normal.applyEuler(mirrorRotation);
@@ -43,23 +44,35 @@ export function OpticalLab() {
         origin={new THREE.Vector3(-5, 0, 0)} 
         direction={new THREE.Vector3(1, 0, 0)} 
         reflectSurfaces={reflectSurfaces}
+        mirrorRotation={mirrorRotation}
         color="red"
       />
+
       <Ray 
-        origin={new THREE.Vector3(-5, 0.3, 0)} 
+        origin={new THREE.Vector3(-5, 0, 0.1)} 
         direction={new THREE.Vector3(1, 0, 0)} 
         reflectSurfaces={reflectSurfaces}
+        mirrorRotation={mirrorRotation}
         color="red"
       />
+
+      <Ray 
+        origin={new THREE.Vector3(-5, 0, -0.1)} 
+        direction={new THREE.Vector3(1, 0, 0)} 
+        reflectSurfaces={reflectSurfaces}
+        mirrorRotation={mirrorRotation}
+        color="red"
+      />
+
 
       {/* 거울 */}
       <Mirror position={mirrorPosition} rotation={mirrorRotation} />
 
       {/* 볼록렌즈 */}
-      <LensConvex position={convexLensPosition} />
+      {/* <LensConvex position={convexLensPosition} /> */}
 
       {/* 오목렌즈 */}
-      <LensConcave position={concaveLensPosition} />
+      {/* <LensConcave position={concaveLensPosition} /> */}
     </>
   );
 }

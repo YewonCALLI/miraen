@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { useRef, useMemo, useEffect, useState } from 'react';
-import { Line } from '@react-three/drei';
 
 type RayProps = {
   origin: THREE.Vector3;
@@ -14,6 +13,8 @@ type RayProps = {
   }[];
   depth?: number;
   maxDepth?: number;
+  mirrorRotation?: THREE.Euler;
+
 };
 
 export function Ray({
@@ -24,8 +25,8 @@ export function Ray({
   reflectSurfaces = [],
   depth = 0,
   maxDepth = 3,
+  mirrorRotation
 }: RayProps) {
-  const lineRef = useRef<any>(null);
   const [reflection, setReflection] = useState<JSX.Element | null>(null);
 
   const start = useMemo(() => origin.clone(), [origin]);
@@ -72,14 +73,15 @@ export function Ray({
     return { end: tempEnd, reflectionData: null };
   }, [start, normalizedDir, length, reflectSurfaces]);
 
-  const points = useMemo(() => {
-    return [start, end];
+  const position = useMemo(() => start.clone().add(end).multiplyScalar(0.5), [start, end]);
+  const lengthBetween = useMemo(() => start.distanceTo(end), [start, end]);
+  const quaternion = useMemo(() => {
+    const dir = end.clone().sub(start).normalize();
+    return new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0), // 기본 cylinder 방향
+      dir
+    );
   }, [start, end]);
-
-  const positions = new Float32Array([
-    start.x, start.y, start.z,
-    end.x, end.y, end.z,
-  ]);
 
   useEffect(() => {
     if (reflectionData && depth < maxDepth) {
@@ -109,41 +111,43 @@ export function Ray({
 
   return (
     <>
+      {/* 레이저 본체: Cylinder */}
+      <mesh position={position} quaternion={quaternion}>
+        <cylinderGeometry args={[0.001, 0.001, lengthBetween, 8]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={5}
+          toneMapped={false}
+        />
+      </mesh>
 
-<line>
-    <bufferGeometry attach="geometry">
-      <bufferAttribute
-        attach="attributes-position"
-        count={2}
-        array={positions}
-        itemSize={3}
-      />
-    </bufferGeometry>
-    <lineBasicMaterial
-      attach="material"
-      color={new THREE.Color(7, 0, 0.5)}
-      transparent
-      opacity={0.3}
-      toneMapped={false}
-    />
-  </line>
+      {/* 시작 지점 광원 */}
+      <pointLight position={origin.toArray()} color={color} intensity={1} distance={2}
+      castShadow
+      shadow-mapSize-width={1024}
+      shadow-mapSize-height={1024}
+      shadow-bias={-0.001} />
 
-  {/* Sharp core */}
-  <line>
-    <bufferGeometry attach="geometry">
-      <bufferAttribute
-        attach="attributes-position"
-        count={2}
-        array={positions}
-        itemSize={3}
-      />
-    </bufferGeometry>
-    <lineBasicMaterial
-      attach="material"
-      color="red"
-    />
-  </line>
-      <pointLight position={origin.toArray()} color="red" intensity={4} distance={5} />
+      {/* 반사 지점 광원 + dot */}
+      {reflectionData && (
+        <mesh
+          position={reflectionData.point.clone().add(reflectionData.normal.clone().multiplyScalar(0.001))}
+          rotation={mirrorRotation}
+        >
+          <planeGeometry args={[3.2, 0.02]} />
+          <meshStandardMaterial
+            color="red"
+            opacity={0.2}
+            transparent
+            toneMapped={false}
+            emissive={"red"}
+            emissiveIntensity={1}
+          />
+        </mesh>
+      )}
+
+      {/* 반사 재귀 */}
       {reflection}
     </>
   );
