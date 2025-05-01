@@ -29,7 +29,7 @@ export default function HomePage() {
         />
 
         <OpticalLab />
-        <OrbitControls maxPolarAngle={Math.PI/2} maxDistance={7.0}/>
+        <OrbitControls />
         <SafePostEffects />
         {/* <Lightformer intensity={2} rotation-y={-Math.PI / 2} position={[50, 2, 0]} scale={[100, 2, 1]} /> */}
 
