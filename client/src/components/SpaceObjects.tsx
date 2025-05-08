@@ -359,15 +359,16 @@ export function EarthModel({
           />
   
           {/* 피규어: static tilt 그룹 안에 yaw 동적 그룹 */}
-          <group position={[figurePos[0], figurePos[1] - 0.05, figurePos[2]]}>
+          <group position={[figurePos[0], figurePos[1] - 0.05, figurePos[2]] } >
             {/* ① static tilt 전용 그룹 */}
             <group rotation={[0, -23.5 * Math.PI / 180 - 0.5, 0]}>
               {/* ② yaw 동적 그룹 */}
-              <group ref={figureRef} raycast={() => null}>
-                <primitive 
-                  object={figureScene.clone()} 
-                  scale={[0.006, 0.006, 0.006]} 
-                />
+              <group ref={figureRef}  raycast={() => null}>
+              <primitive 
+                object={figureScene.clone()} 
+                scale={[0.05, 0.05, 0.05]}
+                rotation={[0, Math.PI, 0]} 
+              />
               </group>
             </group>
           </group>

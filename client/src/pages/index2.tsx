@@ -98,7 +98,7 @@ export default function Page() {
 
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
-    Boy_Walking: 3,
+    Boy_Walking: 1,
     Boy_Pose: 1,
     Muscle_Walking: 1,
     Muscle_Pose: 0,
@@ -190,7 +190,7 @@ export default function Page() {
           />
         )}
 
-        <OrbitControls minDistance={0.33} maxDistance={0.45} />
+        <OrbitControls minDistance={0.23} maxDistance={0.53} />
       </Canvas>
 
       {/* UI */}

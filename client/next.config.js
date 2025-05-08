@@ -73,3 +73,10 @@ module.exports = (_phase, { defaultConfig }) => {
 
   return finalConfig
 }
+
+const withTM = require('next-transpile-modules')(['@react-three/cannon']);
+
+module.exports = withTM({
+  reactStrictMode: true,
+  transpilePackages: ['@react-three/cannon'],
+});
