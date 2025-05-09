@@ -26,9 +26,12 @@ export function ConstellationLayer({
 
   useEffect(() => {
     if (!meshRef.current) return
-    meshRef.current.rotation.set(0, 0, 0)
+    // Y축 초기 회전만 한 번 적용
+    meshRef.current.rotation.set(0, Math.PI / 2, 0)
     opacity.current = fadeOut ? 1 : 0
   }, [activeSeason, fadeOut])
+  
+  
 
   const getRotationFactorsForCamera = useMemo(() => {
     if (!activeSeason) return { xFactor: 1, yFactor: 1, zFactor: 1 };
@@ -97,6 +100,8 @@ export function ConstellationLayer({
     () => (activeSeason ? new THREE.TextureLoader().load(texturePath) : null),
     [activeSeason]
   )
+
+  
   if (!tex) return null
 
   return (
@@ -105,13 +110,14 @@ export function ConstellationLayer({
       scale={[300, 300, 300]}
       raycast={() => null}
     >
-      <sphereGeometry args={[1, 32, 32]} />
+      <sphereGeometry args={[1, 32, 32]}  />
       <meshBasicMaterial
         map={tex}
         color={new THREE.Color(0.9, 0.9, 0.9).multiplyScalar(0.7)}
         side={THREE.BackSide}
         transparent
         opacity={0}
+        
       />
     </mesh>
   )
