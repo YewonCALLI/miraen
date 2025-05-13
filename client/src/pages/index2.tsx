@@ -94,12 +94,12 @@ export default function Page() {
   }
   
   const modelUrl = getModelUrl()
-  const lightIntensity = modelType === 'boy' ? 0.2 : 3.0
+  const lightIntensity = modelType === 'boy' ? 1.0 : 3.0
 
   // 애니메이션 인덱스 (필요하면 정확하게 설정)
   const animIndexMap: Record<string, number> = {
     Boy_Walking: 1,
-    Boy_Pose: 1,
+    Boy_Pose: 0,
     Muscle_Walking: 1,
     Muscle_Pose: 0,
     Organs_walking: 1,  // 장기 걷기 애니메이션
