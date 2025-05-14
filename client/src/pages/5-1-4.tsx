@@ -20,8 +20,8 @@ const LinkButton: React.FC<ButtonProps> = ({ label, link }) => {
 
 const CenteredButtons: React.FC = () => {
   const buttons: ButtonProps[] = [
-    { label: '우리 몸의 구조와 기능 - 뼈와 근육 생김새 관찰', link: '/index2' },
-    { label: '우리 몸의 구조와 기능 - 근육과 뼈 움직임 보기', link: '/index3' },
+    { label: '우리 몸의 구조와 기능 - 뼈와 근육 생김새 관찰', link: '/5-1-4-1' },
+    { label: '우리 몸의 구조와 기능 - 근육과 뼈 움직임 보기', link: '/5-1-4-2' },
   ];
 
   return (
