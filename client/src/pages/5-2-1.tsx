@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 
 const SieveSimulation = dynamic(() => import('../scenes/SieveSimulation'), { ssr: false });
 
-export default function Index5() {
+export default function Index() {
   const [triggerSpawn, setTriggerSpawn] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState(1);
   const [enableTilt, setEnableTilt] = useState(true); // 기본적으로 기울이기 활성화
