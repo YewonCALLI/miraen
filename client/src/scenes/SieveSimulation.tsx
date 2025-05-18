@@ -1,17 +1,15 @@
-import { useState, useRef, useMemo, useEffect} from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Group } from 'three';
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import SieveModel from '../components/material/SieveModel';
-import Particle from '../components/material/Particle';
-import ShakeController from '../components/material/ShakeController';
-import UI from '../components/material/UI';
-import { Html } from '@react-three/drei';
-
+import { useFrame } from '@react-three/fiber';
+import SieveModel from '@/components/material/SieveModel';
+import Particle from '@/components/material/Particle';
+import TiltController from '@/components/material/TiltController';
 
 interface Props {
-  shake: boolean;
   triggerSpawn: boolean;
   onSpawnHandled: () => void;
+  selectedLevel: number;
+  setGravity: React.Dispatch<React.SetStateAction<[number, number, number]>>;
 }
 
 type ParticleData = {
@@ -20,17 +18,21 @@ type ParticleData = {
   position: [number, number, number];
 };
 
-export default function SieveSimulation({ shake, triggerSpawn, onSpawnHandled }: Props) {
-  const [level, setLevel] = useState(1);
+export default function SieveSimulation({ 
+  triggerSpawn, 
+  onSpawnHandled, 
+  selectedLevel,
+  setGravity,
+}: Props) {
   const groupRef = useRef<Group>(null);
   const [particles, setParticles] = useState<ParticleData[]>([]);
-
+  
   const spawnParticles = () => {
     const newParticles = Array.from({ length: 10 }, () => {
-      const radius = [0.5, 0.3, 0.2][Math.floor(Math.random() * 3)];
-      const x = (Math.random() - 0.5) * 4;
-      const z = (Math.random() - 0.5) * 4;
-      const y = 5 + Math.random() * 3;
+      const radius = [0.35, 0.25, 0.15][Math.floor(Math.random() * 3)];
+      const x = (Math.random() - 0.5) * 3; // 생성 범위 줄임
+      const z = (Math.random() - 0.5) * 3;
+      const y = 3 + Math.random() * 2;
       return {
         id: crypto.randomUUID(),
         radius,
@@ -42,27 +44,38 @@ export default function SieveSimulation({ shake, triggerSpawn, onSpawnHandled }:
 
   // 떨어진 particle 제거
   useFrame(() => {
-    setParticles((prev) => prev.filter((p) => p.position[1] > -5));
+    setParticles((prev) => prev.filter((p) => p.position[1] > -3));
   });
 
   // 외부 trigger로 입자 생성
   useEffect(() => {
     if (triggerSpawn) {
       spawnParticles();
-      onSpawnHandled(); // flag reset
+      onSpawnHandled();
     }
   }, [triggerSpawn, onSpawnHandled]);
 
   return (
     <>
-      <UI onChange={(val) => setLevel(val)} />
       <group ref={groupRef}>
-        <SieveModel selectedLevel={level} />
+        <SieveModel selectedLevel={selectedLevel} />
       </group>
-      <ShakeController groupRef={groupRef} shake={shake} />
+      
+      {/* 기울이기 컨트롤러 */}
+      <TiltController 
+        groupRef={groupRef} 
+        setGravity={setGravity}
+      />
+      
+      {/* 입자들은 체 밖에 배치 */}
       {particles.map((p) => (
-        <Particle key={p.id} position={p.position} radius={p.radius} />
+        <Particle 
+          key={p.id} 
+          position={p.position} 
+          radius={p.radius}
+        />
       ))}
+      
     </>
   );
 }
