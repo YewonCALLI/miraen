@@ -220,9 +220,9 @@ export default function SieveModel({ selectedLevel }: SieveModelProps) {
 
       <SievePhysics selectedLevel={selectedLevel} />
 
-      {holes.map((hole, i) => (
+      {/* {holes.map((hole, i) => (
         <HoleVisual key={`hole-${i}`} position={hole.position} radius={hole.radius} />
-      ))}
+      ))} */}
 
       <CurvedWallCollider />
     </>
