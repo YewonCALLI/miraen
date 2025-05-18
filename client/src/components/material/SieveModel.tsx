@@ -137,7 +137,7 @@ function WallSegment({ index, segments, radius, height, thickness }: {
 // 외벽 컴포넌트
 function CurvedWallCollider() {
   const segments = 32;
-  const radius = 3.0;
+  const radius = 2.85;
   const height = 5;
   const thickness = 0.15;
   
