@@ -40,20 +40,9 @@ export default function Index() {
           ))}
         </div>
 
-        <div className="flex gap-2">
-          <button className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded" onClick={handleSpawn}>
+       <button className="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded" onClick={handleSpawn}>
             Particle 뿌리기
           </button>
-          <button 
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded" 
-            onClick={() => {
-              // 체 초기화 - 중력을 원래대로 되돌림
-              setGravity([0, -9.81, 0]);
-            }}
-          >
-            초기화
-          </button>
-        </div>
       </div>
 
       {/* 기울이기 안내 */}
