@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import SpaceScene from '@/scenes/SpaceScene' // 경로 수정
+import SpaceScene from '@/scenes/SpaceScene' 
 
-// Import the Season type from wherever it's defined (or define it locally)
 type Season = 'spring' | 'summer' | 'fall' | 'winter'
 
 export default function HomePage() {

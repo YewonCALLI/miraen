@@ -1378,6 +1378,14 @@
   dependencies:
     "@babel/runtime" "^7.13.10"
 
+"@react-spring/animated@~10.0.0":
+  version "10.0.0"
+  resolved "https://registry.npmjs.org/@react-spring/animated/-/animated-10.0.0.tgz"
+  integrity sha512-GQbUaPP4Q+KNBlr3xc2b+qpvttWxBDr6SL+48FNFbxLoACM9GUbHgDzU+LrjSMYVzftpFo2zfu+cf+r8EoFc7g==
+  dependencies:
+    "@react-spring/shared" "~10.0.0"
+    "@react-spring/types" "~10.0.0"
+
 "@react-spring/animated@~9.7.1", "@react-spring/animated@~9.7.5":
   version "9.7.5"
   resolved "https://registry.npmjs.org/@react-spring/animated/-/animated-9.7.5.tgz"
@@ -1385,6 +1393,15 @@
   dependencies:
     "@react-spring/shared" "~9.7.5"
     "@react-spring/types" "~9.7.5"
+
+"@react-spring/core@~10.0.0":
+  version "10.0.0"
+  resolved "https://registry.npmjs.org/@react-spring/core/-/core-10.0.0.tgz"
+  integrity sha512-FbakR0e79MI3IW6KcPWnuLePNLudgNwQMbDVqxjX2E4gLpruI2ZTZu3Z/d6mB/gUOtOqELUMo5ueckzXZwyu7A==
+  dependencies:
+    "@react-spring/animated" "~10.0.0"
+    "@react-spring/shared" "~10.0.0"
+    "@react-spring/types" "~10.0.0"
 
 "@react-spring/core@~9.7.1", "@react-spring/core@~9.7.5":
   version "9.7.5"
@@ -1415,10 +1432,23 @@
     "@react-spring/shared" "~9.7.1"
     "@react-spring/types" "~9.7.1"
 
+"@react-spring/rafz@~10.0.0":
+  version "10.0.0"
+  resolved "https://registry.npmjs.org/@react-spring/rafz/-/rafz-10.0.0.tgz"
+  integrity sha512-j8cwCiJKGNDw1DQLYo/3Z+RIGC+6yZiyDqmvwv3uAJHjL0b+xnLwpKz4SW94kIJcJBNetkYDrwzTMFv4U3JVQA==
+
 "@react-spring/rafz@~9.7.5":
   version "9.7.5"
   resolved "https://registry.npmjs.org/@react-spring/rafz/-/rafz-9.7.5.tgz"
   integrity sha512-5ZenDQMC48wjUzPAm1EtwQ5Ot3bLIAwwqP2w2owG5KoNdNHpEJV263nGhCeKKmuA3vG2zLLOdu3or6kuDjA6Aw==
+
+"@react-spring/shared@~10.0.0":
+  version "10.0.0"
+  resolved "https://registry.npmjs.org/@react-spring/shared/-/shared-10.0.0.tgz"
+  integrity sha512-MQThixU7zP89+UHfgdsl6ceN9aMU1HQ0zPDAZ6Z1qHghIpmocZvPf3L+y08wS7SefkreRNqoIuv/XdlG5uVReQ==
+  dependencies:
+    "@react-spring/rafz" "~10.0.0"
+    "@react-spring/types" "~10.0.0"
 
 "@react-spring/shared@~9.7.1", "@react-spring/shared@~9.7.5":
   version "9.7.5"
@@ -1428,7 +1458,17 @@
     "@react-spring/rafz" "~9.7.5"
     "@react-spring/types" "~9.7.5"
 
-"@react-spring/three@~9.7.1", "@react-spring/three@~9.7.5":
+"@react-spring/three@^10.0.0":
+  version "10.0.0"
+  resolved "https://registry.npmjs.org/@react-spring/three/-/three-10.0.0.tgz"
+  integrity sha512-Pd7OlC0C6ywpJ4eT/NmF8i6+2IJ3OxCTnk1YPO0mH9GNt5fXiL3Wr8zj55Uium9m5jsGF0nc6G0R4Phf3MA84w==
+  dependencies:
+    "@react-spring/animated" "~10.0.0"
+    "@react-spring/core" "~10.0.0"
+    "@react-spring/shared" "~10.0.0"
+    "@react-spring/types" "~10.0.0"
+
+"@react-spring/three@~9.7.1":
   version "9.7.5"
   resolved "https://registry.npmjs.org/@react-spring/three/-/three-9.7.5.tgz"
   integrity sha512-RxIsCoQfUqOS3POmhVHa1wdWS0wyHAUway73uRLp3GAL5U2iYVNdnzQsep6M2NZ994BlW8TcKuMtQHUqOsy6WA==
@@ -1437,6 +1477,21 @@
     "@react-spring/core" "~9.7.5"
     "@react-spring/shared" "~9.7.5"
     "@react-spring/types" "~9.7.5"
+
+"@react-spring/three@~9.7.5":
+  version "9.7.5"
+  resolved "https://registry.npmjs.org/@react-spring/three/-/three-9.7.5.tgz"
+  integrity sha512-RxIsCoQfUqOS3POmhVHa1wdWS0wyHAUway73uRLp3GAL5U2iYVNdnzQsep6M2NZ994BlW8TcKuMtQHUqOsy6WA==
+  dependencies:
+    "@react-spring/animated" "~9.7.5"
+    "@react-spring/core" "~9.7.5"
+    "@react-spring/shared" "~9.7.5"
+    "@react-spring/types" "~9.7.5"
+
+"@react-spring/types@~10.0.0":
+  version "10.0.0"
+  resolved "https://registry.npmjs.org/@react-spring/types/-/types-10.0.0.tgz"
+  integrity sha512-dCvBpZA38MGfOqLVvsfOrmKig1NR9jD0BjEmFn5dPPaGgtgEU8QjBrxTnU282Fgf+SOBJfPtOsHRa/uHGBza5Q==
 
 "@react-spring/types@~9.7.1", "@react-spring/types@~9.7.5":
   version "9.7.5"

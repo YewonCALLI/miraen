@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { OpticalLab } from '../scenes/OpticalLab';
+import { RayToggleButton } from '@/components/Light/buttonToggle';
 
 const PostEffects = dynamic(() => import('../components/Light/PostEffects'), { ssr: false });
 
@@ -14,8 +15,9 @@ function SafePostEffects() {
 }
 
 export default function HomePage() {
-  const [activeMode, setActiveMode] = useState<'direct' | 'reflection' | 'refraction'>('reflection'); // Default to reflection
-  const [lensType, setLensType] = useState<'convex' | 'concave'>('convex'); // Default to convex lens
+  const [activeMode, setActiveMode] = useState<'direct' | 'reflection' | 'refraction'>('reflection');
+  const [lensType, setLensType] = useState<'convex' | 'concave'>('convex'); 
+  const [rayVisible, setRayVisible] = useState(true);
 
   return (
     <div className="w-screen h-screen bg-black flex flex-col">
@@ -28,7 +30,9 @@ export default function HomePage() {
             backgroundBlurriness={0.3}
             environmentRotation={[0, Math.PI / 4, 0]}
           />
-          <OpticalLab mode={activeMode} lensType={lensType} />
+          <OpticalLab mode={activeMode} lensType={lensType} rayVisible={rayVisible} />
+          <RayToggleButton onToggle={() => setRayVisible(prev => !prev)} 
+          />
           <OrbitControls
             maxPolarAngle={activeMode === 'reflection' ? Math.PI / 2.5 : Math.PI}
             minPolarAngle={activeMode === 'reflection' ? Math.PI / 6 : 0}
