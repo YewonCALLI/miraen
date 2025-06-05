@@ -38,12 +38,12 @@ export function LensConcave({
           // 기존 geometry 유지하고 재질만 완전 교체
           const newMaterial = new THREE.MeshPhysicalMaterial({
             transparent: true,
-            opacity: 0.9,
+            opacity: 0.94,
             transmission: 0.95,
             ior: 1.7,
             thickness: 0.9,
             roughness: 0.4,
-            metalness: 0.2,
+            metalness: 0.1,
             clearcoat: 0.0,
             clearcoatRoughness: 0,
             color: new THREE.Color(0x000000),
