@@ -14,7 +14,7 @@ function SafePostEffects() {
   return isReady ? <PostEffects /> : null;
 }
 
-export default function HomePage() {
+export default function Home() {
   const [activeMode, setActiveMode] = useState<'direct' | 'reflection' | 'refraction'>('reflection');
   const [lensType, setLensType] = useState<'convex' | 'concave'>('convex'); 
   const [rayVisible, setRayVisible] = useState(true);

@@ -26,7 +26,7 @@ const allPreloadUrls = [
 ]
 
 
-export default function Page() {
+export default function Home() {
   const [modelType, setModelType] = useState<ModelType>('boy')
   const [animState, setAnimState] = useState<AnimationState>('pose')
   const [isLoading, setIsLoading] = useState(true)

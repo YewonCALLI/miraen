@@ -1,53 +1,74 @@
-import { useMemo } from 'react';
+import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { useEffect, useRef } from 'react';
 
 type LensConcaveProps = {
   position: THREE.Vector3;
   radius?: number;
   height?: number;
   thickness?: number;
+  scale?: number;
+  scale2?: number;
+  positionOffset?: [number, number, number];
 };
 
 export function LensConcave({
   position,
-  radius = 1,
-  height = 2,
-  thickness = 0.2
+  scale = 0.3,
+  scale2 = 0.2,
+  positionOffset = [0.2, -0.93, -0.0],
 }: LensConcaveProps) {
-  const geometry = useMemo(() => {
-    const h = height / 2;
+  const { scene } = useGLTF('/models/Light/concave lens.gltf');
+  const meshRef = useRef<THREE.Group>(null);
   
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(0.39, -h, 0),
-      new THREE.Vector3(0.37, -h + 0.1, 0),
-      new THREE.Vector3(0.22, -h / 3, 0),
-      new THREE.Vector3(0.2, 0, 0),
-      new THREE.Vector3(0.22, h / 3, 0),
-      new THREE.Vector3(0.37, h - 0.1, 0),
-      new THREE.Vector3(0.39, h, 0),
-    ]);
+  const adjustedPosition = [
+    position.x + positionOffset[0],
+    position.y + positionOffset[1],
+    position.z + positionOffset[2]
+  ] as [number, number, number];
   
-    const curvePoints: THREE.Vector2[] = curve.getPoints(50).map(p => new THREE.Vector2(p.x, p.y));
-  
-    return new THREE.LatheGeometry(curvePoints, 64);
-  }, [height]);
-  
-  
+  // 강력한 유리 재질 적용 + 모델 복제
+  useEffect(() => {
+    if (meshRef.current && scene) {
+      // 모델을 복제하여 독립적으로 재질 적용
+      const clonedScene = scene.clone();
+      
+      clonedScene.traverse((child) => {
+        if (child instanceof THREE.Mesh) {
+          // 기존 geometry 유지하고 재질만 완전 교체
+          const newMaterial = new THREE.MeshPhysicalMaterial({
+            transparent: true,
+            opacity: 0.9,
+            transmission: 0.95,
+            ior: 1.7,
+            thickness: 0.9,
+            roughness: 0.4,
+            metalness: 0.2,
+            clearcoat: 0.0,
+            clearcoatRoughness: 0,
+            color: new THREE.Color(0x000000),
+            envMapIntensity: 0,
+          });
+          
+          child.material = newMaterial;
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
+      if (meshRef.current.children.length > 0) {
+        meshRef.current.clear();
+      }
+      meshRef.current.add(clonedScene);
+    }
+  }, [scene]);
   
   return (
-    <mesh position={position.toArray()}>
-      <primitive object={geometry} attach="geometry" />
-      <meshPhysicalMaterial
-        color="#a7c5eb"
-        transparent
-        opacity={0.6}
-        roughness={0.05}
-        metalness={0}
-        ior={1.5}
-        transmission={1}
-        thickness={thickness}
-        side={THREE.DoubleSide}
-      />
-    </mesh>
+    <group 
+      ref={meshRef}
+      rotation={[0, Math.PI/2, 0]}
+      position={adjustedPosition}
+      scale={[scale2, scale, scale]}
+    />
   );
 }

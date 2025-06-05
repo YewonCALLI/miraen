@@ -1,14 +1,29 @@
 // components/Flame.tsx
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-export default function Flame({ position = [0, 1.2, 0] }: { position?: [number, number, number] }) {
+interface FlameProps {
+  position?: [number, number, number]
+  opacity?: number
+}
+
+export default function Flame({ position = [0, 1.2, 0], opacity = 1 }: FlameProps) {
   const matRef = useRef<THREE.ShaderMaterial>(null)
+
+  // opacity 변경 시 즉시 업데이트
+  useEffect(() => {
+    if (matRef.current) {
+      matRef.current.uniforms.opacity.value = opacity
+      matRef.current.needsUpdate = true  // 중요: 업데이트 강제
+    }
+  }, [opacity])
 
   useFrame(({ clock }) => {
     if (matRef.current) {
       matRef.current.uniforms.time.value = clock.getElapsedTime()
+      // opacity도 매 프레임마다 업데이트 (확실한 반영을 위해)
+      matRef.current.uniforms.opacity.value = opacity
     }
   })
 
@@ -21,6 +36,7 @@ export default function Flame({ position = [0, 1.2, 0] }: { position?: [number, 
         side={THREE.BackSide}
         uniforms={{
           time: { value: 0 },
+          opacity: { value: opacity }
         }}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
@@ -87,6 +103,7 @@ const vertexShader = `
 const fragmentShader = `
 varying float hValue;
 varying vec2 vUv;
+uniform float opacity; 
 
 vec3 heatmapGradient(float t) {
   return clamp((pow(t, 1.5) * 0.8 + 0.2) * vec3(smoothstep(0.0, 0.35, t) + t * 0.5, smoothstep(0.5, 1.0, t), max(1.0 - t * 1.7, t * 7.0 - 6.0)), 0.0, 1.0);
@@ -102,6 +119,6 @@ void main() {
   color += vec3(1, 0.9, 0.5) * (1.05 - vUv.y);
   color = mix(color, vec3(0.66, 0.32, 0.03), smoothstep(0.95, 1., hValue));
 
-  gl_FragColor = vec4(color, alpha);
+  gl_FragColor = vec4(color, alpha*opacity);
 }
 `

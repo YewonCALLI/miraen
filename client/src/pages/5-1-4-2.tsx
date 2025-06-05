@@ -3,7 +3,7 @@ import { OrbitControls } from '@react-three/drei'
 import AnimatedModel2 from '../components/AnimatedModel2'
 import { useState } from 'react'
 
-export default function Page() {
+export default function Home() {
   const [action, setAction] = useState<'extend' | 'fold'>('fold')
 
   const [lineTargetPosA, setLineTargetPosA] = useState<[number, number, number]>([-0.035, 0.001, -0.015])

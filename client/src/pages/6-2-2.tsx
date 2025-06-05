@@ -1,29 +1,31 @@
+// pages/index.tsx
+import { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 import Experiment from '@/components/Candle/Experiment'
+import { OrbitControls } from '@react-three/drei'
 
-export default function App() {
+export default function Home() {
+  const [uiText, setUiText] = useState('비커를 들어보세요!')
+
   return (
-    <div className="fixed inset-0 bg-black">
-    <Canvas camera={{ position: [0, 2, 5], fov: 50 }}>
-      <ambientLight intensity={0.3} />
-      <directionalLight
-        castShadow
-        position={[2, 3, 2]}
-        intensity={1}
-        shadow-mapSize-width={1024}
-        shadow-mapSize-height={1024}
-        shadow-camera-far={10}
-        shadow-camera-left={-5}
-        shadow-camera-right={5}
-        shadow-camera-top={5}
-        shadow-camera-bottom={-5}
-        />
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', background:'gray'}}>
+      <Canvas camera={{ position: [2, 4, 5], fov: 50 }}>
+        <ambientLight intensity={0.5} />
+        <Experiment setUiText={setUiText} />
+        {/* <OrbitControls/> */}
 
-      <Experiment />
-      <OrbitControls />
-
-    </Canvas>
+      </Canvas>
+      <div style={{
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        color: 'white',
+        fontSize: '1.2rem',
+        pointerEvents: 'none'
+      }}>
+        {uiText}
+      </div>
+      
     </div>
   )
 }
