@@ -1,5 +1,4 @@
 import { Ray } from '../components/Light/Ray';
-import { Mirror } from '../components/Light/Mirror';
 import { LensConvex } from '../components/Light/LensConvex';
 import { LensConcave } from '../components/Light/LensConcave';
 import * as THREE from 'three';
@@ -18,12 +17,31 @@ export function OpticalLab({
   rayVisible = true,
 }: OpticalLabProps) {
   const mirrorPosition = new THREE.Vector3(1, 0, 0);
-  const mirrorRotation = new THREE.Euler(Math.PI / 2, 5 * Math.PI / 4, 0);
+  const mirrorRotation = new THREE.Euler(Math.PI / 2, Math.PI / 2, 0);
 
   const mirrorNormal = useMemo(() => {
-    const normal = new THREE.Vector3(0, 0, 1);
-    normal.applyEuler(mirrorRotation);
+    const normal = new THREE.Vector3(-1, 0, 0);
     return normal;
+  }, []);
+
+  const rayDirection = useMemo(() => {
+    const angleRad = (45 * Math.PI) / 180;
+    return new THREE.Vector3(
+      Math.cos(angleRad),
+      0,               
+      Math.sin(angleRad)
+    ).normalize();
+  }, []);
+
+  const rayOrigins = useMemo(() => {
+    const angleRad = (45 * Math.PI) / 180;
+    const baseZ = -3 * Math.tan(angleRad);
+    
+    return [
+      new THREE.Vector3(-2, 0, baseZ), 
+      new THREE.Vector3(-2, 0.1, baseZ),
+      new THREE.Vector3(-2, -0.1, baseZ),
+    ];
   }, []);
 
   const lensPosition = new THREE.Vector3(-3, 0, 0);
@@ -53,7 +71,6 @@ export function OpticalLab({
 
   return (
     <>
-      {/* 직진 모드 */}
       {mode === 'direct' && rayVisible && (
         <Ray
           origin={new THREE.Vector3(-5, 0, 0)}
@@ -64,43 +81,30 @@ export function OpticalLab({
         />
       )}
 
-      {/* 반사 모드 */}
       {mode === 'reflection' && (
         <>
           {rayVisible && (
             <>
-              <Ray
-                origin={new THREE.Vector3(-5, 0, 0)}
-                direction={new THREE.Vector3(1, 0, 0)}
-                reflectSurfaces={reflectSurfaces}
-                mirrorRotation={mirrorRotation}
-                color="red"
-              />
-              <Ray
-                origin={new THREE.Vector3(-5, 0, 0.1)}
-                direction={new THREE.Vector3(1, 0, 0)}
-                reflectSurfaces={reflectSurfaces}
-                mirrorRotation={mirrorRotation}
-                color="red"
-              />
-              <Ray
-                origin={new THREE.Vector3(-5, 0, -0.1)}
-                direction={new THREE.Vector3(1, 0, 0)}
-                reflectSurfaces={reflectSurfaces}
-                mirrorRotation={mirrorRotation}
-                color="red"
-              />
+              {rayOrigins.map((origin, index) => (
+                <Ray
+                  key={index}
+                  origin={origin}
+                  direction={rayDirection}
+                  reflectSurfaces={reflectSurfaces}
+                  color="red"
+                  length={15}
+                />
+              ))}
             </>
           )}
-          {/* 거울 */}
           <Reflector
             resolution={2048}
-            args={[1.8, 3]}
+            args={[5, 3]}
             mirror={0.9}
             mixStrength={0.5}
             mixBlur={0}
             blur={[0, 0]}
-            rotation={[Math.PI / 2, 5 * Math.PI / 4, 0]}
+            rotation={[Math.PI / 2, 3*Math.PI / 2, 0]} 
             position={[1, 0, 0]}
           >
             {(Material: React.ElementType, props) => (
@@ -112,6 +116,7 @@ export function OpticalLab({
               />
             )}
           </Reflector>
+
         </>
       )}
 
@@ -121,19 +126,19 @@ export function OpticalLab({
           {rayVisible && (
             <>
               <Ray
-                origin={new THREE.Vector3(-5, 0, 0)}
+                origin={new THREE.Vector3(-5, 0, 0.3)}
                 direction={new THREE.Vector3(1, 0, 0)}
                 reflectSurfaces={reflectSurfaces}
                 color="red"
               />
               <Ray
-                origin={new THREE.Vector3(-5, 0.5, 0)}
+                origin={new THREE.Vector3(-5, 0.5, 0.3)}
                 direction={new THREE.Vector3(1, 0, 0)}
                 reflectSurfaces={reflectSurfaces}
                 color="red"
               />
               <Ray
-                origin={new THREE.Vector3(-5, -0.5, 0)}
+                origin={new THREE.Vector3(-5, -0.5, 0.3)}
                 direction={new THREE.Vector3(1, 0, 0)}
                 reflectSurfaces={reflectSurfaces}
                 color="red"

@@ -29,12 +29,10 @@ export function LensConvex({
   
   useEffect(() => {
     if (meshRef.current && scene) {
-      // 모델을 복제하여 독립적으로 재질 적용
       const clonedScene = scene.clone();
       
       clonedScene.traverse((child) => {
         if (child instanceof THREE.Mesh) {
-          // 기존 geometry 유지하고 재질만 완전 교체
           const newMaterial = new THREE.MeshPhysicalMaterial({
             transparent: true,
             opacity: 0.94,
