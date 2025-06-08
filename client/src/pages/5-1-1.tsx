@@ -7,6 +7,7 @@ import { useEffect, useState, Suspense, useRef } from 'react'
 import UnderwaterEnvironment from '@/components/Dinosaur/Underwater'
 import * as THREE from 'three'
 import CameraLogger from '@/components/CameraLogger'
+import Scene from '@/components/canvas/Scene'
 
 const modelPaths = [
   'models/Dinosaur/1/Dino.gltf',
@@ -196,7 +197,7 @@ export default function FossilViewer() {
       </div>
 
       <div className="flex-1">
-        <Canvas 
+        <Scene
           shadows
           camera={{ position: [0, 0, 0], fov: 50 }}
           gl={{ antialias: true }}
@@ -285,7 +286,7 @@ export default function FossilViewer() {
             minDistance={10}
             maxDistance={100}
           />
-        </Canvas>
+        </Scene>
       </div>
     </div>
   )

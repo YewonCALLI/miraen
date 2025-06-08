@@ -5,6 +5,7 @@ import { useState, useMemo } from 'react';
 import { OrbitControls, Environment } from '@react-three/drei';
 import { OpticalLab } from '../scenes/OpticalLab';
 import { RayToggleButton } from '@/components/Light/buttonToggle';
+import Scene from '@/components/canvas/Scene';
 
 const PostEffects = dynamic(() => import('../components/Light/PostEffects'), { ssr: false });
 
@@ -56,7 +57,7 @@ export default function Home() {
   return (
     <div className="w-screen h-screen bg-black flex flex-col">
       <div className="flex-grow">
-        <Canvas 
+        <Scene 
           camera={{ 
             position: cameraSettings.position as [number, number, number], 
             fov: 50 
@@ -81,7 +82,7 @@ export default function Home() {
             enablePan={true}
           />
           <SafePostEffects />
-        </Canvas>
+        </Scene>
       </div>
       
       <div className="h-16 bg-gray-900 flex justify-center items-center space-x-4 px-4">
