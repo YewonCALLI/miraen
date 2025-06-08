@@ -15,8 +15,11 @@ export default function Model({ path, scale = 4, position = [0, 0, 0], sceneInde
   const { scene: originalScene, animations } = useGLTF(path)
   const mixer = useRef<THREE.AnimationMixer | null>(null)
   const hasCalledOnLoaded = useRef(false)
+  const sceneRef = useRef<number>(-1)
 
   const clonedScene = useMemo(() => {
+    console.log(`Creating cloned scene for scene ${sceneIndex} with path: ${path}`)
+    
     const cloned = originalScene.clone(true)
 
     // 이름이 Terrain인 오브젝트 제거
@@ -36,22 +39,46 @@ export default function Model({ path, scale = 4, position = [0, 0, 0], sceneInde
     })
 
     return cloned
-  }, [originalScene, sceneIndex])
+  }, [originalScene, sceneIndex, path])
 
-  
+  // 씬이 변경되었을 때 onLoaded 호출 상태 리셋
+  useEffect(() => {
+    if (sceneRef.current !== sceneIndex) {
+      console.log(`Scene changed from ${sceneRef.current} to ${sceneIndex}`)
+      sceneRef.current = sceneIndex || -1
+      hasCalledOnLoaded.current = false
+    }
+  }, [sceneIndex])
+
   // 애니메이션 처리 및 onLoaded 호출
   useEffect(() => {
-    hasCalledOnLoaded.current = false
+    console.log(`Model effect running for scene ${sceneIndex}`)
     
+    // 애니메이션 설정
     if (animations && animations.length > 0) {
       mixer.current = new THREE.AnimationMixer(clonedScene)
       const action = mixer.current.clipAction(animations[0])
       action.play()
+      console.log(`Animation started for scene ${sceneIndex}`)
     }
 
+    // onLoaded 콜백 호출 (씬당 한 번만)
     if (onLoaded && !hasCalledOnLoaded.current) {
+      console.log(`Calling onLoaded for scene ${sceneIndex}`)
       hasCalledOnLoaded.current = true
-      onLoaded()
+      
+      // 다음 프레임에 호출하여 렌더링이 완료된 후 실행되도록 함
+      requestAnimationFrame(() => {
+        onLoaded()
+      })
+    }
+
+    // 클린업 함수
+    return () => {
+      if (mixer.current) {
+        mixer.current.stopAllAction()
+        mixer.current = null
+      }
     }
   }, [animations, clonedScene, onLoaded, sceneIndex])
 
