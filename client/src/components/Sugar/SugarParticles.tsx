@@ -2,7 +2,7 @@ import { useRef, useEffect, useMemo, useCallback } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-const GRAVITY = -3.0 // -1.2에서 -2.0으로 증가
+const GRAVITY = -2.0 // -1.2에서 -2.0으로 증가
 const WATER_LEVEL = 0.8
 
 interface Particle {
@@ -192,7 +192,7 @@ export function SugarParticles({
         meshRef.current.setMatrixAt(i, instanceData.dummy.matrix)
         return
       }
-      //@ts-ignore
+
       if (p.state !== 'removed') {
         remainingCount++
       }

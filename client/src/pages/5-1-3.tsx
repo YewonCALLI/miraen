@@ -284,17 +284,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 실험 가이드 */}
-      <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 bg-yellow-50/90 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-yellow-200 max-w-2xl'>
-        <div className='text-sm text-yellow-800'>
-          <div className='font-semibold mb-1'>💡 실험 방법:</div>
-          <div>1. 왼쪽 비커: 1스푼만 투입하여 저농도 용액 제조</div>
-          <div>2. 오른쪽 비커: 5스푼을 순차적으로 투입하여 고농도 용액 제조</div>
-          <div>3. 설탕 실험 완료 후 토마토를 떨어뜨려 부력 차이를 관찰하세요</div>
-          <div>4. 고농도 용액에서 토마토가 더 잘 떠오르는 것을 확인하세요!</div>
-        </div>
-      </div>
-
       {/* 전체 초기화 버튼 */}
       <div className='absolute top-20 left-1/2 transform -translate-x-1/2 z-10'>
         <button
