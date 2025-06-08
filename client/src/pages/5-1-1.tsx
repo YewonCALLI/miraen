@@ -1,5 +1,5 @@
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
-import { OrbitControls, useGLTF, Sky, Environment } from '@react-three/drei'
+import { OrbitControls, useGLTF, Environment } from '@react-three/drei'
+import { useThree, useFrame } from '@react-three/fiber'
 import Model from '../components/Dinosaur/Model'
 import LoadingScreen from '../components/Dinosaur/LoadingScreen'
 import Ocean from '../components/Dinosaur/Ocean'
@@ -56,7 +56,7 @@ function AnimationController({
   const animationStateRef = useRef({
     isAnimating: false,
     hasStarted: false,
-    currentWaterLevel: -0.05, // 물이 아래에서 시작
+    currentWaterLevel: -0.05,
     lastSceneIndex: -1,
     modelLoadTime: null as number | null
   })
@@ -64,7 +64,6 @@ function AnimationController({
   useEffect(() => {
     const state = animationStateRef.current
     
-    // 씬이 실제로 변경된 경우에만 초기화
     if (state.lastSceneIndex !== sceneIndex) {
       console.log('씬 변경 감지:', sceneIndex)
       state.lastSceneIndex = sceneIndex
@@ -73,16 +72,15 @@ function AnimationController({
       state.modelLoadTime = null
       
       if (sceneIndex === 1) {
-        state.currentWaterLevel = -0.05 // 물이 아래에서 시작
+        state.currentWaterLevel = -0.05
       } else {
-        state.currentWaterLevel = 4 // 다른 씬에서는 물이 위에
+        state.currentWaterLevel = 4
       }
       
       onWaterLevelUpdate(state.currentWaterLevel)
     }
   }, [sceneIndex, onWaterLevelUpdate])
 
-  // 모델 로드 시점 기록
   useEffect(() => {
     const state = animationStateRef.current
     if (modelLoaded && sceneIndex === 1 && !state.modelLoadTime) {
@@ -94,12 +92,10 @@ function AnimationController({
   useFrame((_, delta) => {
     const state = animationStateRef.current
     
-    // 씬 1에서만 애니메이션 실행
     if (sceneIndex !== 1 || !modelLoaded || !state.modelLoadTime) return
     
-    // 애니메이션이 아직 시작되지 않았다면 2초 대기
     if (!state.hasStarted) {
-      if (Date.now() - state.modelLoadTime > 1500) { // 모델 로드 후 2초 대기
+      if (Date.now() - state.modelLoadTime > 1500) {
         state.hasStarted = true
         state.isAnimating = true
         console.log('물이 올라오기 시작!')
@@ -107,14 +103,12 @@ function AnimationController({
       return
     }
     
-    // 물 올라오는 애니메이션 실행
     if (state.isAnimating) {
-      const targetLevel = 4 // 물이 올라갈 최종 높이
-      const speed = 1.0 // 애니메이션 속도
+      const targetLevel = 4
+      const speed = 1.0
       
       state.currentWaterLevel += (targetLevel - state.currentWaterLevel) * speed * delta
       
-      // 목표 위치에 거의 도달했으면 애니메이션 종료
       if (Math.abs(state.currentWaterLevel - targetLevel) < 0.1) {
         state.currentWaterLevel = targetLevel
         state.isAnimating = false
@@ -128,31 +122,137 @@ function AnimationController({
   return null
 }
 
+// Scene 내부의 모든 컨텐츠
+function SceneContent({ 
+  sceneIndex, 
+  modelLoaded, 
+  waterLevel, 
+  handleWaterLevelUpdate, 
+  handleModelLoaded, 
+  modelPosition, 
+  showWater 
+}: {
+  sceneIndex: number
+  modelLoaded: boolean
+  waterLevel: number
+  handleWaterLevelUpdate: (level: number) => void
+  handleModelLoaded: () => void
+  modelPosition: [number, number, number]
+  showWater: boolean
+}) {
+  return (
+    <>
+      <SceneCameraController sceneIndex={sceneIndex} />
+      <AnimationController 
+        sceneIndex={sceneIndex}
+        modelLoaded={modelLoaded}
+        onWaterLevelUpdate={handleWaterLevelUpdate}
+      />
+      <CameraLogger />
+
+      {!showWater && (
+        <>
+          <ambientLight intensity={0.3} />
+          <directionalLight 
+            castShadow 
+            position={[10, 20, 5]} 
+            intensity={1.2}
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-left={-20}
+            shadow-camera-right={20}
+            shadow-camera-top={20}
+            shadow-camera-bottom={-20}
+            shadow-camera-near={0.1}
+            shadow-camera-far={50}
+            shadow-bias={-0.0001}
+          />
+          <pointLight 
+            position={[-10, 10, -10]} 
+            intensity={0.5}
+            castShadow
+            shadow-mapSize-width={1024}
+            shadow-mapSize-height={1024}
+          />
+        </>
+      )}
+
+      <fogExp2 attach="fog" args={['#001122', 0.01]} />
+
+      {/* 모델 로딩 - Scene의 Suspense가 처리 */}
+      <Model
+        key={sceneIndex}
+        path={modelPaths[sceneIndex - 1]}
+        scale={4}
+        position={modelPosition}
+        sceneIndex={sceneIndex}
+        onLoaded={handleModelLoaded}
+      />
+
+      {showWater && (
+        <>
+          <Ocean 
+            textureUrl="/models/Dinosaur/ground.png"
+            normalMapUrl="/models/Dinosaur/1/Terrain_Terrain_Normal_OpenGL.png"
+            textureScale={10.0}
+            textureOpacity={0.83}
+            timeSpeed={0.9}
+            flowSpeed={0.9}
+            waterLevel={waterLevel}
+          />
+          <UnderwaterEnvironment sceneIndex={sceneIndex} />
+        </>
+      )}
+
+      <Environment preset='sunset' />
+
+      {!showWater && (
+        <mesh 
+          position={[0, -2, 0]} 
+          rotation={[-Math.PI / 2, 0, 0]} 
+          receiveShadow
+        />
+      )}
+
+      <OrbitControls 
+        enablePan={true}
+        enableZoom={true}
+        enableRotate={true}
+        minDistance={10}
+        maxDistance={100}
+      />
+    </>
+  )
+}
+
 export default function FossilViewer() {
   const [sceneIndex, setSceneIndex] = useState(1)
-  const [loaded, setLoaded] = useState(false)
-  const [waterLevel, setWaterLevel] = useState(-5) // 물의 높이 상태
-  const [modelLoaded, setModelLoaded] = useState(false)
+  const [globalLoaded, setGlobalLoaded] = useState(false) // 전체 프리로드 상태
+  const [currentModelLoaded, setCurrentModelLoaded] = useState(false) // 현재 모델 로드 상태
+  const [waterLevel, setWaterLevel] = useState(-5)
 
   const showWater = sceneIndex === 1 || sceneIndex === 2
 
+  // 전체 모델 프리로드
   useEffect(() => {
     async function preloadAll() {
       try {
+        console.log('모든 모델 프리로드 시작...')
         await Promise.all(modelPaths.map((path) => useGLTF.preload(path)))
-        setLoaded(true)
+        console.log('모든 모델 프리로드 완료!')
+        setGlobalLoaded(true)
       } catch (err) {
         console.error('모델 로딩 실패:', err)
-        setLoaded(true)
+        setGlobalLoaded(true)
       }
     }
     preloadAll()
   }, [])
 
-  // 씬이 변경될 때마다 상태 초기화
+  // 씬이 변경될 때마다 현재 모델 로드 상태 리셋
   useEffect(() => {
     console.log('씬 변경:', sceneIndex)
-    // modelLoaded 상태는 여기서 초기화하지 않음
+    setCurrentModelLoaded(false)
   }, [sceneIndex])
 
   const handleWaterLevelUpdate = (level: number) => {
@@ -162,14 +262,26 @@ export default function FossilViewer() {
   const modelPosition: [number, number, number] = 
     sceneIndex === 2
       ? [-2.5, -6, -2]
-      : [0, -8, 0] // 모델은 고정 위치에 유지
+      : [0, -8, 0]
 
   const handleModelLoaded = () => {
     console.log('Model loaded for scene:', sceneIndex)
-    // 중복 호출 방지
-    if (!modelLoaded) {
-      setModelLoaded(true)
+    if (!currentModelLoaded) {
+      setCurrentModelLoaded(true)
     }
+  }
+
+  // 전체 프리로드가 완료되지 않았으면 전체 로딩 스크린 표시
+  if (!globalLoaded) {
+    return (
+      <div className="w-screen h-screen bg-black flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="inline-block w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
+          <div className="text-lg">화석 모델 로딩 중...</div>
+          <div className="text-sm text-gray-400 mt-2">잠시만 기다려주세요</div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -206,85 +318,14 @@ export default function FossilViewer() {
             gl.shadowMap.type = THREE.PCFSoftShadowMap
           }}
         >
-          <SceneCameraController sceneIndex={sceneIndex} />
-          <AnimationController 
+          <SceneContent
             sceneIndex={sceneIndex}
-            modelLoaded={modelLoaded}
-            onWaterLevelUpdate={handleWaterLevelUpdate}
-          />
-          <CameraLogger />
-
-          {!showWater && (
-            <>
-              <ambientLight intensity={0.3} />
-              <directionalLight 
-                castShadow 
-                position={[10, 20, 5]} 
-                intensity={1.2}
-                shadow-mapSize-width={2048}
-                shadow-mapSize-height={2048}
-                shadow-camera-left={-20}
-                shadow-camera-right={20}
-                shadow-camera-top={20}
-                shadow-camera-bottom={-20}
-                shadow-camera-near={0.1}
-                shadow-camera-far={50}
-                shadow-bias={-0.0001}
-              />
-              <pointLight 
-                position={[-10, 10, -10]} 
-                intensity={0.5}
-                castShadow
-                shadow-mapSize-width={1024}
-                shadow-mapSize-height={1024}
-              />
-            </>
-          )}
-
-          <fogExp2 attach="fog" args={['#001122', 0.01]} />
-
-          <Suspense fallback={null}>
-            <Model
-              key={sceneIndex}
-              path={modelPaths[sceneIndex - 1]}
-              scale={4}
-              position={modelPosition}
-              sceneIndex={sceneIndex}
-              onLoaded={handleModelLoaded}
-            />
-
-            {showWater && (
-              <>
-                <Ocean 
-                  textureUrl="/models/Dinosaur/ground.png"
-                  normalMapUrl="/models/Dinosaur/1/Terrain_Terrain_Normal_OpenGL.png"
-                  textureScale={10.0}
-                  textureOpacity={0.83}
-                  timeSpeed={0.9}
-                  flowSpeed={0.9}
-                  waterLevel={waterLevel}
-                />
-                <UnderwaterEnvironment sceneIndex={sceneIndex} />
-              </>
-            )}
-          </Suspense>
-
-          <Environment preset='sunset' />
-
-          {!showWater && (
-            <mesh 
-              position={[0, -2, 0]} 
-              rotation={[-Math.PI / 2, 0, 0]} 
-              receiveShadow
-            />
-          )}
-
-          <OrbitControls 
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
-            minDistance={10}
-            maxDistance={100}
+            modelLoaded={currentModelLoaded}
+            waterLevel={waterLevel}
+            handleWaterLevelUpdate={handleWaterLevelUpdate}
+            handleModelLoaded={handleModelLoaded}
+            modelPosition={modelPosition}
+            showWater={showWater}
           />
         </Scene>
       </div>

@@ -16,6 +16,7 @@ export default function Model({ path, scale = 4, position = [0, 0, 0], sceneInde
   const mixer = useRef<THREE.AnimationMixer | null>(null)
   const hasCalledOnLoaded = useRef(false)
   const sceneRef = useRef<number>(-1)
+  const isLoadedRef = useRef(false)
 
   const clonedScene = useMemo(() => {
     console.log(`Creating cloned scene for scene ${sceneIndex} with path: ${path}`)
@@ -35,27 +36,44 @@ export default function Model({ path, scale = 4, position = [0, 0, 0], sceneInde
         const mesh = child as THREE.Mesh
         mesh.castShadow = true
         mesh.receiveShadow = true
+        
+        // 메시가 로드되었다는 것을 확인
+        if (!isLoadedRef.current) {
+          isLoadedRef.current = true
+          console.log(`Mesh loaded for scene ${sceneIndex}`)
+        }
       }
     })
 
     return cloned
   }, [originalScene, sceneIndex, path])
 
-  // 씬이 변경되었을 때 onLoaded 호출 상태 리셋
+  // 씬이 변경되었을 때 상태 리셋
   useEffect(() => {
     if (sceneRef.current !== sceneIndex) {
       console.log(`Scene changed from ${sceneRef.current} to ${sceneIndex}`)
       sceneRef.current = sceneIndex || -1
       hasCalledOnLoaded.current = false
+      isLoadedRef.current = false
+      
+      // 이전 애니메이션 정리
+      if (mixer.current) {
+        mixer.current.stopAllAction()
+        mixer.current = null
+      }
     }
   }, [sceneIndex])
 
-  // 애니메이션 처리 및 onLoaded 호출
+  // 모델 로드 완료 처리
   useEffect(() => {
     console.log(`Model effect running for scene ${sceneIndex}`)
     
     // 애니메이션 설정
-    if (animations && animations.length > 0) {
+    if (animations && animations.length > 0 && clonedScene) {
+      if (mixer.current) {
+        mixer.current.stopAllAction()
+      }
+      
       mixer.current = new THREE.AnimationMixer(clonedScene)
       const action = mixer.current.clipAction(animations[0])
       action.play()
@@ -63,28 +81,44 @@ export default function Model({ path, scale = 4, position = [0, 0, 0], sceneInde
     }
 
     // onLoaded 콜백 호출 (씬당 한 번만)
-    if (onLoaded && !hasCalledOnLoaded.current) {
+    if (onLoaded && !hasCalledOnLoaded.current && clonedScene) {
       console.log(`Calling onLoaded for scene ${sceneIndex}`)
       hasCalledOnLoaded.current = true
       
       // 다음 프레임에 호출하여 렌더링이 완료된 후 실행되도록 함
-      requestAnimationFrame(() => {
+      const timeoutId = setTimeout(() => {
         onLoaded()
-      })
-    }
+      }, 100) // 약간의 딜레이를 두어 완전히 로드된 후 호출
 
-    // 클린업 함수
+      return () => clearTimeout(timeoutId)
+    }
+  }, [animations, clonedScene, onLoaded, sceneIndex])
+
+  useFrame((_, delta) => {
+    if (mixer.current) {
+      mixer.current.update(delta * 0.5)
+    }
+  })
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
     return () => {
       if (mixer.current) {
         mixer.current.stopAllAction()
         mixer.current = null
       }
     }
-  }, [animations, clonedScene, onLoaded, sceneIndex])
+  }, [])
 
-  useFrame((_, delta) => {
-    mixer.current?.update(delta * 0.5)
-  })
+  if (!clonedScene) {
+    console.log(`Scene not ready for ${sceneIndex}`)
+    return null
+  }
 
   return <primitive object={clonedScene} scale={scale} position={position} />
+}
+
+// 프리로드 함수 export
+export const preloadModel = (path: string) => {
+  return useGLTF.preload(path)
 }
