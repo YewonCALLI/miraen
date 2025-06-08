@@ -1,20 +1,33 @@
 import { useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 interface ModelProps {
   path: string
   scale?: number
   position?: [number, number, number]
+  sceneIndex?: number
+  onLoaded?: () => void
 }
 
-export default function Model({ path, scale = 1, position = [0, 0, 0] }: ModelProps) {
-  const { scene, animations } = useGLTF(path)
+export default function Model({ path, scale = 4, position = [0, 0, 0], sceneIndex, onLoaded}: ModelProps) {
+  const { scene: originalScene, animations } = useGLTF(path)
   const mixer = useRef<THREE.AnimationMixer | null>(null)
+  const hasCalledOnLoaded = useRef(false)
 
-  useEffect(() => {
-    scene.traverse((child) => {
+  const clonedScene = useMemo(() => {
+    const cloned = originalScene.clone(true)
+
+    // 이름이 Terrain인 오브젝트 제거
+    const terrain = cloned.getObjectByName('Terrain')
+    if (terrain) {
+      terrain.parent?.remove(terrain)
+      console.log('Removed Terrain object')
+    }
+
+    // 그림자 설정
+    cloned.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh
         mesh.castShadow = true
@@ -22,23 +35,29 @@ export default function Model({ path, scale = 1, position = [0, 0, 0] }: ModelPr
       }
     })
 
-    if (animations.length > 0) {
-      mixer.current = new THREE.AnimationMixer(scene)
-      animations.forEach((clip) => {
-        mixer.current?.clipAction(clip).play()
-      })
+    return cloned
+  }, [originalScene, sceneIndex])
+
+  
+  // 애니메이션 처리 및 onLoaded 호출
+  useEffect(() => {
+    hasCalledOnLoaded.current = false
+    
+    if (animations && animations.length > 0) {
+      mixer.current = new THREE.AnimationMixer(clonedScene)
+      const action = mixer.current.clipAction(animations[0])
+      action.play()
     }
 
-    return () => {
-      mixer.current?.stopAllAction()
-      mixer.current?.uncacheRoot(scene)
-      mixer.current = null
+    if (onLoaded && !hasCalledOnLoaded.current) {
+      hasCalledOnLoaded.current = true
+      onLoaded()
     }
-  }, [animations, scene])
+  }, [animations, clonedScene, onLoaded, sceneIndex])
 
   useFrame((_, delta) => {
     mixer.current?.update(delta * 0.5)
   })
 
-  return <primitive object={scene} scale={scale} position={position} />
+  return <primitive object={clonedScene} scale={scale} position={position} />
 }
