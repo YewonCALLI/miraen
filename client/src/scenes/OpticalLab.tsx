@@ -4,6 +4,7 @@ import { LensConcave } from '../components/Light/LensConcave';
 import * as THREE from 'three';
 import { useMemo } from 'react';
 import { Reflector } from '@react-three/drei';
+import Model from '@/components/Light/Model'
 
 interface OpticalLabProps {
   mode: 'direct' | 'reflection' | 'refraction';

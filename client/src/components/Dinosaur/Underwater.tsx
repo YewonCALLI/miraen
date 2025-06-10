@@ -120,7 +120,7 @@ export default function UnderwaterEnvironment({ sceneIndex }: UnderwaterEnvironm
 
       {/* 검정색 바닥 평면 (그림자 받기) */}
       <mesh 
-        position={[0,-1, 0]} 
+        position={[0,-2.5, 0]} 
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
       >

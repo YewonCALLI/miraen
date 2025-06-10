@@ -124,12 +124,7 @@ export default function Home() {
   }, [leftBeaker, rightBeaker, leftTomato, rightTomato])
 
   return (
-    <div className='w-screen h-screen bg-white flex flex-col'>
-      <div className='absolute top-4 left-1/2 transform -translate-x-1/2 z-10'>
-        <h1 className='text-2xl font-bold text-gray-800 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg'>
-          설탕 농도별 부력 실험 (스푼별 투입 + 토마토 부력)
-        </h1>
-      </div>
+    <div className='w-screen h-screen bg-gray flex flex-col'>
 
       {/* 왼쪽 비커 컨트롤 */}
       <div className='absolute top-20 left-4 z-10 bg-blue-50/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-blue-200 w-72'>
@@ -284,15 +279,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 전체 초기화 버튼 */}
-      <div className='absolute top-20 left-1/2 transform -translate-x-1/2 z-10'>
-        <button
-          onClick={resetAll}
-          disabled={leftBeaker.isExperimentRunning || rightBeaker.isExperimentRunning}
-          className='px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
-          🔄 전체 초기화
-        </button>
-      </div>
 
       <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
         <ambientLight intensity={0.5} />
@@ -319,9 +305,10 @@ export default function Home() {
             beakerPosition={[-1.3, -0.35, 0]}
             isDropped={leftTomato.isDropped}
             onDrop={leftTomato.handleTomatoInWater}
+            bottomY={-0.5}  // 이 부분 추가
+            waterSurfaceOffset={0.1}  // 이 부분 추가
           />
         )}
-
         <BaseModel scale={6} position={[-0.5, -0.6, 0]} />
 
         {!leftBeaker.isCompleted && (
@@ -351,6 +338,8 @@ export default function Home() {
             beakerPosition={[1.3, -0.35, 0]}
             isDropped={rightTomato.isDropped}
             onDrop={rightTomato.handleTomatoInWater}
+            bottomY={-0.5}  // 이 부분 추가
+            waterSurfaceOffset={0.1}  // 이 부분 추가
           />
         )}
 

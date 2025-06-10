@@ -6,6 +6,7 @@ import { OrbitControls, Environment } from '@react-three/drei';
 import { OpticalLab } from '../scenes/OpticalLab';
 import { RayToggleButton } from '@/components/Light/buttonToggle';
 import Scene from '@/components/canvas/Scene';
+import Model from '@/components/Light/Model'
 
 const PostEffects = dynamic(() => import('../components/Light/PostEffects'), { ssr: false });
 
@@ -32,7 +33,7 @@ export default function Home() {
         };
       case 'reflection':
         return {
-          position: [0, 8, 0],
+          position: [0.9, 8, 0],
           target: [0, 0, 0],
           maxPolarAngle: Math.PI / 2.2,
           minPolarAngle: 0
@@ -64,7 +65,7 @@ export default function Home() {
           }}
           key={activeMode} // 모드 변경 시 카메라 리셋
         >
-          <ambientLight intensity={4.0} />
+          <ambientLight intensity={1.0} />
           <Environment
             preset="warehouse"
             environmentIntensity={0.6}
@@ -82,6 +83,7 @@ export default function Home() {
             enablePan={true}
           />
           <SafePostEffects />
+          <Model/>
         </Scene>
       </div>
       

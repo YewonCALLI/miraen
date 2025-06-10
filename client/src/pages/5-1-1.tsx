@@ -1,7 +1,6 @@
 import { OrbitControls, useGLTF, Environment } from '@react-three/drei'
 import { useThree, useFrame } from '@react-three/fiber'
 import Model from '../components/Dinosaur/Model'
-import LoadingScreen from '../components/Dinosaur/LoadingScreen'
 import Ocean from '../components/Dinosaur/Ocean'
 import { useEffect, useState, Suspense, useRef } from 'react'
 import UnderwaterEnvironment from '@/components/Dinosaur/Underwater'
@@ -10,6 +9,7 @@ import CameraLogger from '@/components/CameraLogger'
 import Scene from '@/components/canvas/Scene'
 
 const modelPaths = [
+  'models/Dinosaur/0/Dino.gltf',
   'models/Dinosaur/1/Dino.gltf',
   'models/Dinosaur/2/Dino.gltf',
   'models/Dinosaur/3/Dino.gltf',
@@ -17,6 +17,7 @@ const modelPaths = [
 ]
 
 const sceneDescriptions = [
+  "공룡이 살아있을 때의 모습입니다",
   "죽은 생물의 몸체가 호수나 바다에 가라 앉습니다",
   "생물의 몸체 위로 퇴적물이 빠르게 쌓입니다", 
   "퇴적물이 계속 쌓여 지층이 만들어지고, 지층 속에 있던 생물의 몸체는 화석이 됩니다",
@@ -24,6 +25,7 @@ const sceneDescriptions = [
 ]
 
 const cameraPositions = [
+  new THREE.Vector3(0, 20, 0), //씬 0
   new THREE.Vector3(0, 20, 0),   // 씬 1
   new THREE.Vector3(0, 20, 3),   // 씬 2
   new THREE.Vector3(0, 16, 0),   // 씬 3
@@ -34,7 +36,7 @@ function SceneCameraController({ sceneIndex }: { sceneIndex: number }) {
   const { camera } = useThree()
 
   useEffect(() => {
-    const pos = cameraPositions[sceneIndex - 1]
+    const pos = cameraPositions[sceneIndex]
     camera.position.copy(pos)
     camera.lookAt(0, 0, 0)
     camera.updateProjectionMatrix()
@@ -56,7 +58,7 @@ function AnimationController({
   const animationStateRef = useRef({
     isAnimating: false,
     hasStarted: false,
-    currentWaterLevel: -0.05,
+    currentWaterLevel: 4,
     lastSceneIndex: -1,
     modelLoadTime: null as number | null
   })
@@ -72,7 +74,7 @@ function AnimationController({
       state.modelLoadTime = null
       
       if (sceneIndex === 1) {
-        state.currentWaterLevel = -0.05
+        state.currentWaterLevel = 4
       } else {
         state.currentWaterLevel = 4
       }
@@ -140,6 +142,26 @@ function SceneContent({
   modelPosition: [number, number, number]
   showWater: boolean
 }) {
+  // 디버깅을 위한 로그 추가
+  console.log('SceneContent rendering:', {
+    sceneIndex,
+    modelPath: modelPaths[sceneIndex],
+    pathExists: !!modelPaths[sceneIndex]
+  })
+
+  // 유효한 sceneIndex인지 확인
+  if (sceneIndex < 0 || sceneIndex >= modelPaths.length) {
+    console.error('Invalid sceneIndex:', sceneIndex)
+    return null
+  }
+
+  const currentModelPath = modelPaths[sceneIndex]
+  
+  if (!currentModelPath) {
+    console.error('No model path found for sceneIndex:', sceneIndex)
+    return null
+  }
+
   return (
     <>
       <SceneCameraController sceneIndex={sceneIndex} />
@@ -179,10 +201,10 @@ function SceneContent({
 
       <fogExp2 attach="fog" args={['#001122', 0.01]} />
 
-      {/* 모델 로딩 - Scene의 Suspense가 처리 */}
+      {/* 모델 로딩 - 안전성 검사 추가 */}
       <Model
-        key={sceneIndex}
-        path={modelPaths[sceneIndex - 1]}
+        key={`${sceneIndex}-${currentModelPath}`} // 더 구체적인 key
+        path={currentModelPath}
         scale={4}
         position={modelPosition}
         sceneIndex={sceneIndex}
@@ -224,9 +246,8 @@ function SceneContent({
     </>
   )
 }
-
 export default function FossilViewer() {
-  const [sceneIndex, setSceneIndex] = useState(1)
+  const [sceneIndex, setSceneIndex] = useState(0)
   const [globalLoaded, setGlobalLoaded] = useState(false) // 전체 프리로드 상태
   const [currentModelLoaded, setCurrentModelLoaded] = useState(false) // 현재 모델 로드 상태
   const [waterLevel, setWaterLevel] = useState(-5)
@@ -261,7 +282,7 @@ export default function FossilViewer() {
 
   const modelPosition: [number, number, number] = 
     sceneIndex === 2
-      ? [-2.5, -6, -2]
+      ? [-2.5, -8, -2]
       : [0, -8, 0]
 
   const handleModelLoaded = () => {
@@ -287,7 +308,7 @@ export default function FossilViewer() {
   return (
     <div className="w-screen h-screen bg-black flex flex-col">
       <div className="flex justify-center gap-2 p-4 bg-gray-900/90 text-white z-10">
-        {[1, 2, 3, 4].map((num) => (
+        {[0, 1, 2, 3, 4].map((num) => (
           <button
             key={num}
             onClick={() => setSceneIndex(num)}
@@ -304,7 +325,7 @@ export default function FossilViewer() {
 
       <div className="text-center p-4 bg-black text-white">
         <p className="text-lg font-medium">
-          {sceneDescriptions[sceneIndex - 1]}
+          {sceneDescriptions[sceneIndex]}
         </p>
       </div>
 

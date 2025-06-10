@@ -1,3 +1,4 @@
+//혼합물의 분리 5-2-1.tsx
 import { useState, useRef } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Physics } from '@react-three/cannon';
