@@ -193,9 +193,10 @@ export function SugarParticles({
         return
       }
 
-      if (p.state !== 'removed') {
+      if (p.state === 'waiting' || p.state === 'falling' || p.state === 'sinking') {
         remainingCount++
       }
+
 
       p.age += delta
 
