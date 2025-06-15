@@ -45,7 +45,7 @@ export default function Home() {
         />
 
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
-          <planeGeometry args={[5, 5]} />
+
           <shadowMaterial opacity={0.4} />
         </mesh>
 

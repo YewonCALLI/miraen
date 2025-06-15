@@ -15,7 +15,7 @@ type Props = {
 
 export default function AnimatedModel2({
   url,
-  scale = 1,
+  scale = 0.1,
   actionName,
   position = [0, 0, 0],
   lineTargetPosA = [-0.03, 0.00, -0.02],

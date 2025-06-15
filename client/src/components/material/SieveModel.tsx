@@ -1,10 +1,12 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { useBox } from '@react-three/cannon';
 import { Group } from 'three';
 
 interface SieveModelProps {
   selectedLevel: number;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
 }
 
 type Hole = {
@@ -52,31 +54,42 @@ const holeDataByLevel: Record<number, Hole[]> = {
   ],
   1: [], // 막힘
   2: [
-    { position: [0, 0, 0], radius: 0.2 },
-    { position: [0, 0, 0.75], radius: 0.2 },
-    { position: [0, 0, 1.5], radius: 0.2 },
-    { position: [0, 0, -0.75], radius: 0.2 },
-    { position: [0, 0, -1.5], radius: 0.2 },
-    { position: [0.75, 0, 0], radius: 0.2 },
-    { position: [1.5, 0, 0], radius: 0.2 },
-    { position: [-0.75, 0, 0], radius: 0.2 },
-    { position: [-1.5, 0, 0], radius: 0.2 },
-    { position: [0.75, 0, 0.75], radius: 0.2 },
-    { position: [0.75, 0, 1.5], radius: 0.2 },
-    { position: [1.5, 0, 1.5], radius: 0.2 },
-    { position: [1.5, 0, 0.75], radius: 0.2 },
-    { position: [-0.75, 0, 0.75], radius: 0.2 },
-    { position: [-0.75, 0, 1.5], radius: 0.2 },
-    { position: [-1.5, 0, 1.5], radius: 0.2 },
-    { position: [-1.5, 0, 0.75], radius: 0.2 },
-    { position: [-0.75, 0, -0.75], radius: 0.2 },
-    { position: [-0.75, 0, -1.5], radius: 0.2 },
-    { position: [-1.5, 0, -1.5], radius: 0.2 },
-    { position: [-1.5, 0, -0.75], radius: 0.2 },
-    { position: [0.75, 0, -0.75], radius: 0.2 },
-    { position: [0.75, 0, -1.5], radius: 0.2 },
-    { position: [1.5, 0, -1.5], radius: 0.2 },
-    { position: [1.5, 0, -0.75], radius: 0.2 },
+    { position: [0, 0, 0], radius: 0.21 },
+    { position: [0, 0, 0.75], radius: 0.21 },
+    { position: [0, 0, 1.5], radius: 0.21 },
+    { position: [0, 0, -0.75], radius: 0.21 },
+    { position: [0, 0, -1.5], radius: 0.21 },
+    { position: [0.75, 0, 0], radius: 0.21 },
+    { position: [1.5, 0, 0], radius: 0.21 },
+    { position: [-0.75, 0, 0], radius: 0.212 },
+    { position: [-1.5, 0, 0], radius: 0.212 },
+    { position: [0.75, 0, 0.75], radius: 0.212 },
+    { position: [0.75, 0, 1.5], radius: 0.212 },
+    { position: [1.5, 0, 1.5], radius: 0.212 },
+    { position: [1.5, 0, 0.75], radius: 0.212 },
+    { position: [-0.75, 0, 0.75], radius: 0.21 },
+    { position: [-0.75, 0, 1.5], radius: 0.21 },
+    { position: [-1.5, 0, 1.5], radius: 0.21 },
+    { position: [-1.5, 0, 0.75], radius: 0.21 },
+    { position: [-0.75, 0, -0.75], radius: 0.21 },
+    { position: [-0.75, 0, -1.5], radius: 0.21 },
+    { position: [-1.5, 0, -1.5], radius: 0.21 },
+    { position: [-1.5, 0, -0.75], radius: 0.21 },
+    { position: [0.75, 0, -0.75], radius: 0.21 },
+    { position: [0.75, 0, -1.5], radius: 0.21 },
+    { position: [1.5, 0, -1.5], radius: 0.21 },
+    { position: [1.5, 0, -0.75], radius: 0.21 },
+    { position: [2.25, 0, -0.75], radius: 0.21 },
+    { position: [2.25, 0, 0], radius: 0.21 },
+    { position: [2.25, 0, 0.75], radius: 0.21 },
+    { position: [2.25, 0, 1.5], radius: 0.21 },
+    { position: [2.25, 0, -1.5], radius: 0.2 },
+    { position: [-2.25, 0, -0.75], radius: 0.21 },
+    { position: [-2.25, 0, 0], radius: 0.21 },
+    { position: [-2.25, 0, 0.75], radius: 0.21 },
+    { position: [-2.25, 0, 1.5], radius: 0.21 },
+    { position: [-2.25, 0, -1.5], radius: 0.2 },
+
   ],
 };
 
@@ -91,40 +104,89 @@ function HoleVisual({ position, radius }: Hole) {
 }
 
 // 개별 충돌 셀 컴포넌트
-function SolidCell({ position }: { position: [number, number, number] }) {
+function SolidCell({ 
+  position, 
+  sievePosition = [0, 0, 0], 
+  sieveRotation = [0, 0, 0] 
+}: { 
+  position: [number, number, number];
+  sievePosition?: [number, number, number];
+  sieveRotation?: [number, number, number];
+}) {
   const ref = useRef(null);
-  useBox(() => ({
+  const [, api] = useBox(() => ({
     type: 'Static',
     args: [0.3 * 0.95, 0.05, 0.3 * 0.95],
-    position,
+    position: [
+      position[0] + sievePosition[0], 
+      position[1] + sievePosition[1], 
+      position[2] + sievePosition[2]
+    ],
+    rotation: sieveRotation,
     friction: 0.1,
   }), ref);
+  
+  // 체의 위치가 변경될 때마다 충돌체도 업데이트
+  useEffect(() => {
+    api.position.set(
+      position[0] + sievePosition[0], 
+      position[1] + sievePosition[1], 
+      position[2] + sievePosition[2]
+    );
+    api.rotation.set(sieveRotation[0], sieveRotation[1], sieveRotation[2]);
+  }, [sievePosition, sieveRotation, api, position]);
   
   return null;
 }
 
-
-
 // 외벽 세그먼트 컴포넌트
-function WallSegment({ index, segments, radius, height, thickness }: { 
+function WallSegment({ 
+  index, 
+  segments, 
+  radius, 
+  height, 
+  thickness,
+  sievePosition = [0, 0, 0],
+  sieveRotation = [0, 0, 0]
+}: { 
   index: number;
   segments: number;
   radius: number;
   height: number;
   thickness: number;
+  sievePosition?: [number, number, number];
+  sieveRotation?: [number, number, number];
 }) {
   const ref = useRef(null);
   const angle = (index / segments) * Math.PI * 2;
   const x = Math.cos(angle) * radius;
   const z = Math.sin(angle) * radius;
-  const rotation: [number, number, number] = [0, -angle, 0];
+  const rotation: [number, number, number] = [
+    sieveRotation[0], 
+    -angle + sieveRotation[1], 
+    sieveRotation[2]
+  ];
   
-  useBox(() => ({
+  const [, api] = useBox(() => ({
     type: 'Static',
     args: [thickness, height, (2 * Math.PI * radius) / segments],
-    position: [x, height / 2, z],
+    position: [
+      x + sievePosition[0], 
+      height / 2 + sievePosition[1], 
+      z + sievePosition[2]
+    ],
     rotation,
   }), ref);
+  
+  // 체의 위치가 변경될 때마다 외벽도 업데이트
+  useEffect(() => {
+    api.position.set(
+      x + sievePosition[0], 
+      height / 2 + sievePosition[1], 
+      z + sievePosition[2]
+    );
+    api.rotation.set(rotation[0], rotation[1], rotation[2]);
+  }, [sievePosition, sieveRotation, api, x, z, height, rotation]);
   
   return (
     <mesh key={index} ref={ref} position={[x, height / 2, z]} rotation={rotation}>
@@ -135,7 +197,13 @@ function WallSegment({ index, segments, radius, height, thickness }: {
 }
 
 // 외벽 컴포넌트
-function CurvedWallCollider() {
+function CurvedWallCollider({ 
+  sievePosition = [0, 0, 0], 
+  sieveRotation = [0, 0, 0] 
+}: {
+  sievePosition?: [number, number, number];
+  sieveRotation?: [number, number, number];
+}) {
   const segments = 32;
   const radius = 2.85;
   const height = 5;
@@ -153,7 +221,9 @@ function CurvedWallCollider() {
           segments={segments} 
           radius={radius} 
           height={height} 
-          thickness={thickness} 
+          thickness={thickness}
+          sievePosition={sievePosition}
+          sieveRotation={sieveRotation}
         />
       ))}
     </>
@@ -161,7 +231,15 @@ function CurvedWallCollider() {
 }
 
 // 체의 물리 구조 생성 컴포넌트
-function SievePhysics({ selectedLevel }: { selectedLevel: number }) {
+function SievePhysics({ 
+  selectedLevel, 
+  sievePosition = [0, 0, 0], 
+  sieveRotation = [0, 0, 0] 
+}: { 
+  selectedLevel: number;
+  sievePosition?: [number, number, number];
+  sieveRotation?: [number, number, number];
+}) {
   // Grid positions 계산
   const gridCells = useMemo(() => {
     const cells: { position: [number, number, number]; key: string }[] = [];
@@ -195,15 +273,24 @@ function SievePhysics({ selectedLevel }: { selectedLevel: number }) {
   return (
     <>
       {gridCells.map((cell) => (
-        <SolidCell key={cell.key} position={cell.position} />
+        <SolidCell 
+          key={cell.key} 
+          position={cell.position}
+          sievePosition={sievePosition}
+          sieveRotation={sieveRotation}
+        />
       ))}
     </>
   );
 }
 
-export default function SieveModel({ selectedLevel }: SieveModelProps) {
+export default function SieveModel({ 
+  selectedLevel, 
+  position = [0, 0, 0], 
+  rotation = [0, 0, 0] 
+}: SieveModelProps) {
   const visualRef = useRef<Group>(null);
-  const { scene } = useGLTF('/models/material/Streinergltf.gltf');
+  const { scene } = useGLTF('/models/material/Strainers.gltf');
   const mesh = scene.children[selectedLevel]?.clone();
   const holes = holeDataByLevel[selectedLevel];
 
@@ -213,18 +300,25 @@ export default function SieveModel({ selectedLevel }: SieveModelProps) {
         <primitive 
           object={mesh} 
           ref={visualRef} 
-          position={[0, -0.7, 4.9]} 
+          position={[0, -0.9, 0]} 
           scale={0.22} 
         />
       )}
 
-      <SievePhysics selectedLevel={selectedLevel} />
+      <SievePhysics 
+        selectedLevel={selectedLevel} 
+        sievePosition={position}
+        sieveRotation={rotation}
+      />
 
-      {/* {holes.map((hole, i) => (
+      {holes.map((hole, i) => (
         <HoleVisual key={`hole-${i}`} position={hole.position} radius={hole.radius} />
-      ))} */}
+      ))}
 
-      <CurvedWallCollider />
+      <CurvedWallCollider 
+        sievePosition={position}
+        sieveRotation={rotation}
+      />
     </>
   );
 }
