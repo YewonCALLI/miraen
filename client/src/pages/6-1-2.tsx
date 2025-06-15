@@ -5,16 +5,15 @@ import Model from '../components/6-1-2/Model'
 import Scene from '@/components/canvas/Scene'
 import { useState, useRef, useEffect } from 'react'
 import * as THREE from 'three'
-import { LensFlare } from "@andersonmancini/lens-flare";
-import { EffectComposer } from '@react-three/postprocessing';
-
+import { LensFlare } from '@andersonmancini/lens-flare'
+import { EffectComposer } from '@react-three/postprocessing'
 
 // 카메라 컨트롤 컴포넌트
-function CameraController({ 
-  targetName, 
-  isFollowing, 
-  sceneRef
-}: { 
+function CameraController({
+  targetName,
+  isFollowing,
+  sceneRef,
+}: {
   targetName: string | null
   isFollowing: boolean
   sceneRef: React.RefObject<THREE.Group>
@@ -24,9 +23,9 @@ function CameraController({
 
   // 각 오브젝트별 카메라 오프셋 설정
   const getCameraOffset = (targetName: string) => {
-    switch(targetName) {
+    switch (targetName) {
       case 'Mesh123': // 말
-        return { x: 0, y: 2.5, z:-1 }
+        return { x: 0, y: 2.5, z: -1 }
       case 'Wheel_A': // 자동차
         return { x: -1.2, y: 2, z: -2.9 }
       case 'female_genericMesh2': // 사람
@@ -34,7 +33,7 @@ function CameraController({
       case 'Male_Head': // 자전거
         return { x: 0, y: 1.5, z: -3 }
       case 'bridge': // 기차
-        return { x: 0, y:-0.2, z: -14 }
+        return { x: 0, y: -0.2, z: -14 }
       default:
         return { x: 0, y: 2, z: -5 }
     }
@@ -43,15 +42,15 @@ function CameraController({
   // 특정 이름의 오브젝트를 찾는 함수
   const findTargetByName = (targetName: string) => {
     if (!sceneRef.current) return null
-    
+
     let targetObject: THREE.Object3D | null = null
-    
+
     sceneRef.current.traverse((child) => {
       if (child instanceof THREE.Mesh && child.name === targetName) {
         targetObject = child
       }
     })
-    
+
     if (targetObject) {
       console.log(`Object with name "${targetName}" not found`)
       // 사용 가능한 객체들을 다시 보여줌
@@ -61,33 +60,33 @@ function CameraController({
           allObjects.push(child.name)
         }
       })
-      console.log('Available object names:', allObjects.slice(0,250)) // 처음 20개만 표시
+      console.log('Available object names:', allObjects.slice(0, 250)) // 처음 20개만 표시
     }
-    
+
     return targetObject
   }
 
   useFrame(() => {
     if (isFollowing && targetName && sceneRef.current) {
       const targetObject = findTargetByName(targetName)
-      
+
       if (targetObject) {
         // 타겟 오브젝트의 위치 가져오기
         const targetPosition = new THREE.Vector3()
         targetObject.getWorldPosition(targetPosition)
-        
+
         // 오브젝트별 맞춤 offset 적용 (카메라 위치만 조절)
         const offsetConfig = getCameraOffset(targetName)
         const offset = new THREE.Vector3(offsetConfig.x, offsetConfig.y, offsetConfig.z)
         const cameraPosition = targetPosition.clone().add(offset)
-        
+
         // 카메라 위치를 즉시 업데이트 (lerp 제거로 지연 없음)
         camera.position.copy(cameraPosition)
-        
+
         // 카메라가 항상 +X축 방향을 바라보도록 설정 (절대 방향)
         const lookAtDirection = camera.position.clone().add(new THREE.Vector3(0, 0, 1))
         camera.lookAt(lookAtDirection)
-        
+
         // OrbitControls 타겟도 즉시 업데이트
         if (orbitControlsRef.current) {
           orbitControlsRef.current.target.copy(lookAtDirection)
@@ -97,7 +96,7 @@ function CameraController({
   })
 
   return (
-    <OrbitControls 
+    <OrbitControls
       ref={orbitControlsRef}
       enabled={!isFollowing} // 따라가기 모드일 때는 수동 조작 비활성화
     />
@@ -141,9 +140,9 @@ export default function Home() {
   ]
 
   return (
-    <div className="w-screen h-screen bg-white relative">
+    <div className='w-screen h-screen bg-white relative'>
       {/* 컨트롤 패널 */}
-      <div className="absolute top-4 right-4 z-10 space-y-2 bg-white/90 p-4 rounded-lg shadow-lg max-w-xs">
+      <div className='absolute top-4 right-4 z-10 space-y-2 bg-white/90 p-4 rounded-lg shadow-lg max-w-xs'>
         <button
           onClick={handleStartAnimation}
           disabled={isAnimationPlaying}
@@ -151,14 +150,13 @@ export default function Home() {
             isAnimationPlaying
               ? 'bg-green-500 text-white cursor-not-allowed'
               : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
+          }`}>
           {isAnimationPlaying ? '속도 관찰' : '시작하기'}
         </button>
-        
+
         {isAnimationPlaying && (
           <>
-            <div className="space-y-1">
+            <div className='space-y-1'>
               {viewButtons.map((button, idx) => (
                 <button
                   key={idx}
@@ -167,16 +165,14 @@ export default function Home() {
                     currentView === button.targetName
                       ? 'bg-orange-500 text-white'
                       : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                  }`}
-                >
+                  }`}>
                   {button.name}
                 </button>
               ))}
-              
+
               <button
                 onClick={handleResetView}
-                className="block w-full px-4 py-2 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition-all"
-              >
+                className='block w-full px-4 py-2 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition-all'>
                 자유 시점
               </button>
             </div>
@@ -186,14 +182,11 @@ export default function Home() {
         )}
       </div>
 
-      <Scene 
-        camera={{ position: [16, 3, 20], fov: 50 }}
-        shadows="soft"
-      >
+      <Scene camera={{ position: [16, 3, 20], fov: 50 }} shadows='soft'>
         <ambientLight intensity={0.2} />
-        
-        <directionalLight 
-          position={[5, 5, 5]} 
+
+        <directionalLight
+          position={[5, 5, 5]}
           intensity={1}
           castShadow
           shadow-mapSize={[4096, 4096]}
@@ -206,21 +199,17 @@ export default function Home() {
         />
 
         <group ref={sceneRef}>
-          <Model 
-            scale={1} 
-            position={[0, 0, 0]} 
+          <Model
+            scale={1}
+            position={[0, 0, 0]}
             animationSpeed={isAnimationPlaying ? 0.4 : 0}
             castShadow={true}
             receiveShadow={true}
           />
         </group>
-        
-        <CameraController 
-          targetName={currentView}
-          isFollowing={isFollowing}
-          sceneRef={sceneRef}
-        />
-        
+
+        <CameraController targetName={currentView} isFollowing={isFollowing} sceneRef={sceneRef} />
+
         <Sky
           distance={450000}
           sunPosition={[-10, 0.9, -10]}
@@ -232,8 +221,8 @@ export default function Home() {
           mieDirectionalG={0.85}
         />
         <Environment preset={'apartment'} />
-       <EffectComposer>
-          <LensFlare dirtTextureFile={"/models/5-2-3/coast.png"} />
+        <EffectComposer>
+          <LensFlare dirtTextureFile={'/models/5-2-3/coast.png'} />
         </EffectComposer>
       </Scene>
     </div>

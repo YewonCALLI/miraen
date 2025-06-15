@@ -15,14 +15,16 @@ type GLTFResult = GLTF & {
 
 interface DirectTomatoProps {
   startPosition?: [number, number, number]
-  sugarConcentration?: number
+  sugarConcentration?: number // 설탕 농도 (g/100ml)
   beakerRadius?: number
-  waterLevel?: number
+  waterLevel?: number // 물 높이
   beakerPosition?: [number, number, number]
   isDropped?: boolean
+  maxRiseHeight?: number // 튕겨올라가 멈출 높이
+  riseSpeed?: number // (이전용, 이제 스프링으로 대체 가능)
+  riseSpringStiffness?: number // ← 스프링 상수 k
+  riseSpringDamping?: number // ← 감쇠 상수 c
   onDrop?: () => void
-  bottomY?: number // 바닥면 Y축 좌표를 조절 가능하게
-  waterSurfaceOffset?: number // 물 진입 기준점 조절
 }
 
 export const DirectTomato: React.FC<DirectTomatoProps> = ({
@@ -32,149 +34,192 @@ export const DirectTomato: React.FC<DirectTomatoProps> = ({
   waterLevel = 0.56,
   beakerPosition = [0, -0.6, 0],
   isDropped = false,
+  maxRiseHeight,
+  riseSpeed = 1.2,
+  riseSpringStiffness = 20,
+  riseSpringDamping = 5,
   onDrop,
-  bottomY = -0.5, // 바닥면 기본값
-  waterSurfaceOffset = 0.1, // 물 진입 기준 오프셋
 }) => {
   const { nodes, materials } = useGLTF('models/Sugar/tomato1.glb') as GLTFResult
   const meshRef = useRef<THREE.Mesh>(null!)
 
+  // 목표 높이
+  const apexY = maxRiseHeight ?? startPosition[1]
+
+  // 상태
   const position = useRef(new THREE.Vector3(...startPosition))
   const velocity = useRef(new THREE.Vector3(0, 0, 0))
+  const isInWater = useRef(false)
   const hasDropped = useRef(false)
+  const hasBouncedUp = useRef(false)
 
-  const tomatoRadius = 0.08
-  const GRAVITY = -2.0
-  
-  // 간단한 부력 계산: 설탕 농도가 높으면 부력이 강해짐
-  const buoyancy = sugarConcentration > 10 ? 5.0 : 0  // 10g/100ml 이상에서 부력 발생, 강도 증가
-  
-  console.log(`토마토 설정: 농도=${sugarConcentration}g/100ml, 부력=${buoyancy}`);
-  
-  const getWaterSurfaceY = () => beakerPosition[1] + waterLevel
-  const getBottomY = () => bottomY + tomatoRadius
-  const getWaterEntryY = () => getWaterSurfaceY() - waterSurfaceOffset // 물 진입 기준점
-  
-  // 부력에 따른 목표 높이
-  const getTargetY = () => {
-    if (buoyancy > 0) {
-      // 농도가 높을수록 더 높이 떠오름
-      const floatHeight = (sugarConcentration - 10) * 0.01
-      return getWaterEntryY() + 0.1 + floatHeight // 물 진입 기준점에서 떠오름
-    }
-    return getBottomY() // 가라앉음
-  }
-  
-  const isInsideBeaker = (pos: THREE.Vector3) => {
-    const dx = pos.x - beakerPosition[0]
-    const dz = pos.z - beakerPosition[2]
-    const distance = Math.hypot(dx, dz)
-    const result = distance < beakerRadius - tomatoRadius
-    
-    if (hasDropped.current) {
-      console.log(`비커 체크: pos(${pos.x.toFixed(2)}, ${pos.z.toFixed(2)}), beaker(${beakerPosition[0]}, ${beakerPosition[2]}), distance=${distance.toFixed(3)}, radius=${beakerRadius}, result=${result}`)
-    }
-    
-    return result
-  }
+  // 페이지 가시성 관련 상태 추가
+  const lastTime = useRef<number | null>(null)
+  const isPageVisible = useRef(true)
 
-  const isInWater = (pos: THREE.Vector3) => {
-    const inBeaker = isInsideBeaker(pos)
-    const belowWater = pos.y < getWaterEntryY()
-    const result = inBeaker && belowWater
-    
-    if (hasDropped.current && (inBeaker || belowWater)) {
-      console.log(`물 체크: beaker=${inBeaker}, y=${pos.y.toFixed(3)}, waterEntry=${getWaterEntryY().toFixed(3)}, inWater=${result}`)
-    }
-    
-    return result
-  }
+  // 물리 상수
+  const GRAVITY = -2.5
+  const WATER_DRAG = 0.92
+  const AIR_DRAG = 0.99
+  const BOUNCE_FACTOR = 0.3
+  const MAX_DELTA = 1 / 30 // 최대 delta 값을 30fps로 제한
 
+  // 토마토 속성
+  const tomatoRadius = 0.12
+  const tomatoDensity = 0.95
+  const waterDensity = 1.0 + sugarConcentration * 0.004
+  const densityDifference = waterDensity - tomatoDensity
+  const buoyancyForce = densityDifference * 3.5
+
+  // 페이지 가시성 변화 감지
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      isPageVisible.current = !document.hidden
+      if (!document.hidden) {
+        // 페이지가 다시 보일 때 타이머 리셋
+        lastTime.current = null
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
+  // 드롭 토글
   useEffect(() => {
     if (isDropped && !hasDropped.current) {
       hasDropped.current = true
       position.current.set(...startPosition)
-      velocity.current.set(
-        0, // 수평 속도 제거 - 정확히 아래로만 떨어지게
-        -0.5,
-        0
-      )
+      velocity.current.set((Math.random() - 0.5) * 0.3, -0.5, (Math.random() - 0.5) * 0.3)
+      lastTime.current = null // 타이머 리셋
       onDrop?.()
-    } else if (!isDropped) {
+    } else if (!isDropped && hasDropped.current) {
+      // 리셋
       hasDropped.current = false
+      isInWater.current = false
+      hasBouncedUp.current = false
       position.current.set(...startPosition)
       velocity.current.set(0, 0, 0)
+      lastTime.current = null
     }
   }, [isDropped, startPosition, onDrop])
 
   useFrame((state, delta) => {
-    if (!meshRef.current || !hasDropped.current) {
-      if (meshRef.current) {
-        meshRef.current.position.set(...startPosition)
-      }
-      return
-    }
+    if (!meshRef.current) return
+
+    // delta 값 제한 - 페이지 전환 시 비정상적으로 큰 값 방지
+    const clampedDelta = Math.min(delta, MAX_DELTA)
 
     const pos = position.current
     const vel = velocity.current
 
-    if (isInWater(pos)) {
-      console.log(`물 안에 있음! 부력=${buoyancy}, y위치=${pos.y.toFixed(3)}, 목표=${getTargetY().toFixed(3)}`);
-      
-      // 물 안에서
-      if (buoyancy > 0) {
-        // 부력이 있으면 즉시 위로 올라가는 힘
-        vel.y += buoyancy * delta * 3.0  // 강한 부력으로 바로 떠오름
-        console.log(`부력 적용! vel.y=${vel.y.toFixed(3)}`);
-        
-        const targetY = getTargetY()
-        
-        if (pos.y >= targetY - 0.05) {
-          // 목표 높이 근처에서 bobbing
-          const bobbing = Math.sin(state.clock.elapsedTime * 2) * 0.02
-          pos.y = targetY + bobbing
-          vel.y = bobbing * 0.5
-        }
-      } else {
-        // 부력이 없으면 바닥으로
-        vel.y += GRAVITY * delta
+    // 드롭 전 고정
+    if (!hasDropped.current) {
+      meshRef.current.position.set(...startPosition)
+      return
+    }
+
+    // 이미 스프링 상승 중이면
+    if (hasBouncedUp.current) {
+      // spring F = -k * x  - c * v
+      const displacement = apexY - pos.y
+      const springForce = riseSpringStiffness * displacement
+      const dampingForce = -riseSpringDamping * vel.y
+
+      // dv = (spring + damping) * dt
+      vel.y += (springForce + dampingForce) * clampedDelta
+
+      // 위치 업데이트
+      pos.y += vel.y * clampedDelta
+
+      // 수렴 판정: 변위와 속도 작아지면 완전 멈춤
+      if (Math.abs(displacement) < 0.01 && Math.abs(vel.y) < 0.01) {
+        pos.y = apexY
+        vel.y = 0
       }
-      
-      vel.multiplyScalar(0.85) // 물의 저항
+
+      meshRef.current.position.copy(pos)
+      return
+    }
+
+    // 비커-물 체크
+    const dx = pos.x - beakerPosition[0]
+    const dz = pos.z - beakerPosition[2]
+    const distanceFromCenter = Math.hypot(dx, dz)
+    const insideBeaker = distanceFromCenter < beakerRadius - tomatoRadius * 0.5
+    const atWaterLevel = pos.y <= beakerPosition[1] + waterLevel - tomatoRadius * 0.5
+    const currentlyInWater = insideBeaker && atWaterLevel
+
+    // 중력/부력
+    if (currentlyInWater) {
+      vel.y += (GRAVITY + buoyancyForce) * clampedDelta
+      vel.multiplyScalar(WATER_DRAG)
     } else {
-      // 공기 중에서는 중력만
-      vel.y += GRAVITY * delta
-      vel.multiplyScalar(0.98)
+      vel.y += GRAVITY * clampedDelta
+      vel.multiplyScalar(AIR_DRAG)
     }
 
-    // 위치 업데이트
-    pos.addScaledVector(vel, delta)
+    // 위치 업데이트 - clampedDelta 사용
+    pos.addScaledVector(vel, clampedDelta)
 
-    // 바닥 충돌 체크 (부력이 없을 때만)
-    if (buoyancy === 0 && pos.y <= getBottomY()) {
-      pos.y = getBottomY()
-      vel.y = 0
-    }
-
-    // 비커 벽면 충돌
-    if (isInsideBeaker(pos)) {
-      const dx = pos.x - beakerPosition[0]
-      const dz = pos.z - beakerPosition[2]
-      const distance = Math.hypot(dx, dz)
-      
-      if (distance > beakerRadius - tomatoRadius) {
-        const normal = new THREE.Vector3(dx, 0, dz).normalize()
-        pos.x = beakerPosition[0] + normal.x * (beakerRadius - tomatoRadius) * 0.9
-        pos.z = beakerPosition[2] + normal.z * (beakerRadius - tomatoRadius) * 0.9
-        vel.x *= -0.3
-        vel.z *= -0.3
+    // 벽 충돌
+    const effectiveRadius = beakerRadius - tomatoRadius
+    if (distanceFromCenter > effectiveRadius) {
+      const n = new THREE.Vector3(dx, 0, dz).normalize()
+      pos.x = beakerPosition[0] + n.x * effectiveRadius * 0.9
+      pos.z = beakerPosition[2] + n.z * effectiveRadius * 0.9
+      const radialVel = vel.x * n.x + vel.z * n.z
+      if (radialVel > 0) {
+        vel.x -= n.x * radialVel * (1 + BOUNCE_FACTOR)
+        vel.z -= n.z * radialVel * (1 + BOUNCE_FACTOR)
       }
     }
 
-    // 메시 업데이트
+    // 바닥 충돌
+    if (distanceFromCenter < beakerRadius) {
+      const bottomY = beakerPosition[1] - 0.25 + tomatoRadius
+      if (pos.y < bottomY) {
+        pos.y = bottomY
+        vel.y = Math.abs(vel.y) * BOUNCE_FACTOR
+
+        if (sugarConcentration! > 20 && !hasBouncedUp.current) {
+          hasBouncedUp.current = true
+          // 초기 스프링 속도 세팅 (optional)
+          vel.y = riseSpeed
+        }
+      }
+    }
+
+    // 추가 안전장치: 비정상적인 위치 복구
+    if (pos.y < beakerPosition[1] - 1.0) {
+      console.warn('토마토가 비정상적으로 아래로 떨어짐, 위치 복구')
+      if (hasBouncedUp.current) {
+        // 스프링 상태라면 목표 높이로
+        pos.y = apexY
+        vel.set(0, 0, 0)
+      } else {
+        // 아니라면 바닥으로
+        pos.y = beakerPosition[1] - 0.25 + tomatoRadius
+        vel.y = 0
+      }
+    }
+
+    // 경계 제한
+    if (pos.length() > 3) {
+      pos.normalize().multiplyScalar(3)
+      vel.set(0, 0, 0)
+    }
+    if (pos.y > startPosition[1] + 0.5) {
+      pos.y = startPosition[1] + 0.5
+      vel.y = Math.min(0, vel.y)
+    }
+
+    // 메시 & 회전 - clampedDelta 사용
     meshRef.current.position.copy(pos)
-    meshRef.current.rotation.x += vel.y * delta * 0.5
-    meshRef.current.rotation.z += vel.x * delta * 0.5
+    meshRef.current.rotation.x += vel.y * clampedDelta * 0.5
+    meshRef.current.rotation.z += vel.x * clampedDelta * 0.5
   })
 
   return (

@@ -1,5 +1,5 @@
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls, Environment } from '@react-three/drei'
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
 import Model from '../components/Sugar/Model'
 import { useState, useRef, useCallback } from 'react'
 import Scene from '@/components/canvas/Scene'
@@ -124,11 +124,10 @@ export default function Home() {
   }, [leftBeaker, rightBeaker, leftTomato, rightTomato])
 
   return (
-    <div className='w-screen h-screen bg-gray flex flex-col'>
-
+    <div className='w-screen h-screen bg-gray-300 flex flex-col'>
       {/* 왼쪽 비커 컨트롤 */}
-      <div className='absolute top-20 left-4 z-10 bg-blue-50/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-blue-200 w-72'>
-        <h3 className='text-lg font-semibold text-blue-800 mb-3'>왼쪽 비커 (저농도)</h3>
+      <div className='absolute top-4 left-4 z-10 bg-blue-50/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-blue-200 w-48'>
+        <h3 className='text-lg font-semibold text-blue-800 mb-3'>왼쪽 비커</h3>
         <div className='mb-3 p-3 bg-blue-100 rounded-lg'>
           <div className='text-sm text-blue-700'>
             <div>
@@ -158,24 +157,25 @@ export default function Home() {
           </div>
         )}
 
+        {/* 
         {leftTomato.isFloating && (
           <div className='mb-3 p-2 bg-purple-100 border border-purple-300 rounded text-sm text-purple-800'>
             🍅 토마토가 물에서 {leftConcentration > 0 ? '부력을 받고' : '가라앉고'} 있습니다
           </div>
-        )}
+        )} */}
 
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2'>
             <button
               onClick={leftBeaker.startExperiment}
               disabled={leftBeaker.isExperimentRunning || leftBeaker.isCompleted}
-              className='px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
+              className='w-full px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
               설탕 실험
             </button>
             <button
               onClick={leftBeaker.stopExperiment}
               disabled={!leftBeaker.isExperimentRunning}
-              className='px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
+              className='w-full px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
               중지
             </button>
           </div>
@@ -202,8 +202,8 @@ export default function Home() {
       </div>
 
       {/* 오른쪽 비커 컨트롤 */}
-      <div className='absolute top-20 right-4 z-10 bg-green-50/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-green-200 w-72'>
-        <h3 className='text-lg font-semibold text-green-800 mb-3'>오른쪽 비커 (고농도)</h3>
+      <div className='absolute top-4 right-4 z-10 bg-green-50/90 backdrop-blur-sm rounded-lg p-4 shadow-lg border border-green-200 w-48'>
+        <h3 className='text-lg font-semibold text-green-800 mb-3'>오른쪽 비커</h3>
         <div className='mb-3 p-3 bg-green-100 rounded-lg'>
           <div className='text-sm text-green-700'>
             <div>
@@ -236,24 +236,24 @@ export default function Home() {
           </div>
         )}
 
-        {rightTomato.isFloating && (
+        {/* {rightTomato.isFloating && (
           <div className='mb-3 p-2 bg-purple-100 border border-purple-300 rounded text-sm text-purple-800'>
             🍅 토마토가 물에서 {rightConcentration > 15 ? '더 강한 부력을 받고' : '부력을 받고'} 있습니다
           </div>
-        )}
+        )} */}
 
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2'>
             <button
               onClick={rightBeaker.startExperiment}
               disabled={rightBeaker.isExperimentRunning || rightBeaker.isCompleted}
-              className='px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
+              className='w-full px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
               설탕 실험
             </button>
             <button
               onClick={rightBeaker.stopExperiment}
               disabled={!rightBeaker.isExperimentRunning}
-              className='px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
+              className='w-full px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm'>
               중지
             </button>
           </div>
@@ -279,8 +279,8 @@ export default function Home() {
         </div>
       </div>
 
-
-      <Canvas camera={{ position: [0, 0, 5], fov: 60 }}>
+      <Scene camera={{ position: [0, 2.5, 6], fov: 20 }}>
+        <ContactShadows position={[0, -0.6, 0]} opacity={0.4} scale={10} blur={1.5} far={2} color='black' frames={1} />
         <ambientLight intensity={0.5} />
         <directionalLight intensity={2.5} position={[2, 4, 2]} castShadow />
         <Environment preset='warehouse' />
@@ -298,15 +298,17 @@ export default function Home() {
 
         {leftBeaker.isCompleted && (
           <DirectTomato
-            startPosition={[-1.45, 1.5, 0.2]}
+            startPosition={[-1.5, 1, 0.1]} // 비커 중심의 x,z 좌표에 맞춤
             sugarConcentration={leftConcentration}
             beakerRadius={0.32}
             waterLevel={0.56}
             beakerPosition={[-1.3, -0.35, 0]}
             isDropped={leftTomato.isDropped}
             onDrop={leftTomato.handleTomatoInWater}
-            bottomY={-0.5}  // 이 부분 추가
-            waterSurfaceOffset={0.1}  // 이 부분 추가
+            maxRiseHeight={0.04}
+            riseSpeed={0.1}
+            riseSpringStiffness={10}
+            riseSpringDamping={15}
           />
         )}
         <BaseModel scale={6} position={[-0.5, -0.6, 0]} />
@@ -331,20 +333,22 @@ export default function Home() {
 
         {rightBeaker.isCompleted && (
           <DirectTomato
-            startPosition={[1.1, 1.5, 0.2]}
+            startPosition={[1.2, 1, 0.1]} // 비커 중심의 x,z 좌표에 맞춤
             sugarConcentration={rightConcentration}
             beakerRadius={0.32}
             waterLevel={0.56}
             beakerPosition={[1.3, -0.35, 0]}
             isDropped={rightTomato.isDropped}
             onDrop={rightTomato.handleTomatoInWater}
-            bottomY={-0.5}  // 이 부분 추가
-            waterSurfaceOffset={0.1}  // 이 부분 추가
+            maxRiseHeight={0.0}
+            riseSpeed={0.1}
+            riseSpringStiffness={10}
+            riseSpringDamping={15}
           />
         )}
 
-        <OrbitControls />
-      </Canvas>
+        <OrbitControls maxPolarAngle={Math.PI / 2} />
+      </Scene>
     </div>
   )
 }
