@@ -302,7 +302,7 @@ export default function Home() {
             sugarConcentration={leftConcentration}
             beakerRadius={0.32}
             waterLevel={0.56}
-            beakerPosition={[-1.3, -0.35, 0]}
+            beakerPosition={[-1.3, -0.44, 0]}
             isDropped={leftTomato.isDropped}
             onDrop={leftTomato.handleTomatoInWater}
             maxRiseHeight={0.04}
@@ -337,7 +337,7 @@ export default function Home() {
             sugarConcentration={rightConcentration}
             beakerRadius={0.32}
             waterLevel={0.56}
-            beakerPosition={[1.3, -0.35, 0]}
+            beakerPosition={[1.3, -0.4, 0]}
             isDropped={rightTomato.isDropped}
             onDrop={rightTomato.handleTomatoInWater}
             maxRiseHeight={0.0}
