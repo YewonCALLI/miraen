@@ -10,7 +10,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    transition: all 0.3s ease-in-out;
+    /* transition: all 0.3s ease-in-out; */
   }
 
   @font-face {
@@ -26,4 +26,5 @@
     width: 100%;
     font-family: 'NoonnuBasicGothicRegular', sans-serif;
   }
+
 }
