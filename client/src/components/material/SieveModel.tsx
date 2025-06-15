@@ -311,9 +311,9 @@ export default function SieveModel({
         sieveRotation={rotation}
       />
 
-      {holes.map((hole, i) => (
+      {/* {holes.map((hole, i) => (
         <HoleVisual key={`hole-${i}`} position={hole.position} radius={hole.radius} />
-      ))}
+      ))} */}
 
       <CurvedWallCollider 
         sievePosition={position}
