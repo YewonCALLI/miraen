@@ -5,12 +5,15 @@ import Model from '../components/6-1-2/Model'
 import Scene from '@/components/canvas/Scene'
 import { useState, useRef, useEffect } from 'react'
 import * as THREE from 'three'
+import { LensFlare } from "@andersonmancini/lens-flare";
+import { EffectComposer } from '@react-three/postprocessing';
+
 
 // 카메라 컨트롤 컴포넌트
 function CameraController({ 
   targetName, 
   isFollowing, 
-  sceneRef 
+  sceneRef
 }: { 
   targetName: string | null
   isFollowing: boolean
@@ -18,6 +21,24 @@ function CameraController({
 }) {
   const { camera } = useThree()
   const orbitControlsRef = useRef<any>()
+
+  // 각 오브젝트별 카메라 오프셋 설정
+  const getCameraOffset = (targetName: string) => {
+    switch(targetName) {
+      case 'Mesh123': // 말
+        return { x: 0, y: 2.5, z:-1 }
+      case 'Wheel_A': // 자동차
+        return { x: -1.2, y: 2, z: -2.9 }
+      case 'female_genericMesh2': // 사람
+        return { x: 0, y: 1.5, z: -3 }
+      case 'Male_Head': // 자전거
+        return { x: 0, y: 1.5, z: -3 }
+      case 'bridge': // 기차
+        return { x: 0, y:-0.2, z: -14 }
+      default:
+        return { x: 0, y: 2, z: -5 }
+    }
+  }
 
   // 특정 이름의 오브젝트를 찾는 함수
   const findTargetByName = (targetName: string) => {
@@ -31,7 +52,7 @@ function CameraController({
       }
     })
     
-    if (!targetObject) {
+    if (targetObject) {
       console.log(`Object with name "${targetName}" not found`)
       // 사용 가능한 객체들을 다시 보여줌
       const allObjects: string[] = []
@@ -40,7 +61,7 @@ function CameraController({
           allObjects.push(child.name)
         }
       })
-      console.log('Available object names:', allObjects.slice(0, 20)) // 처음 20개만 표시
+      console.log('Available object names:', allObjects.slice(0,250)) // 처음 20개만 표시
     }
     
     return targetObject
@@ -55,38 +76,21 @@ function CameraController({
         const targetPosition = new THREE.Vector3()
         targetObject.getWorldPosition(targetPosition)
         
-        // 교통수단별로 다른 카메라 오프셋 적용
-        let offset = new THREE.Vector3(0, 2, 5) // 기본 오프셋
-        
-        switch(targetName) {
-          case 'body': // 말
-            offset = new THREE.Vector3(2, 3, 0)
-            break
-          case 'Mesh123': // 자동차
-            offset = new THREE.Vector3(-3, 2, 4)
-            break
-          case 'baseMesh1': // 사람
-            offset = new THREE.Vector3(-1, 1, 2)
-            break
-          case 'Wheel_A': // 자전거
-            offset = new THREE.Vector3(-2, 1.5, 3)
-            break
-          case 'bridge': // 기차
-            offset = new THREE.Vector3(-5, 3, 6)
-            break
-        }
-        
+        // 오브젝트별 맞춤 offset 적용 (카메라 위치만 조절)
+        const offsetConfig = getCameraOffset(targetName)
+        const offset = new THREE.Vector3(offsetConfig.x, offsetConfig.y, offsetConfig.z)
         const cameraPosition = targetPosition.clone().add(offset)
         
-        // 카메라 위치 부드럽게 이동
-        camera.position.lerp(cameraPosition, 0.08)
+        // 카메라 위치를 즉시 업데이트 (lerp 제거로 지연 없음)
+        camera.position.copy(cameraPosition)
         
-        // 카메라가 타겟을 바라보도록 설정
-        camera.lookAt(targetPosition)
+        // 카메라가 항상 +X축 방향을 바라보도록 설정 (절대 방향)
+        const lookAtDirection = camera.position.clone().add(new THREE.Vector3(0, 0, 1))
+        camera.lookAt(lookAtDirection)
         
-        // OrbitControls 타겟도 업데이트
+        // OrbitControls 타겟도 즉시 업데이트
         if (orbitControlsRef.current) {
-          orbitControlsRef.current.target.lerp(targetPosition, 0.08)
+          orbitControlsRef.current.target.copy(lookAtDirection)
         }
       }
     }
@@ -120,58 +124,70 @@ export default function Home() {
     setCurrentView(null)
   }
 
+  const handleOffsetChange = (axis: 'x' | 'y' | 'z', value: number) => {
+    // UI 조정 기능 제거됨 - 이제 코드에서 직접 설정
+  }
+
   const viewButtons = [
-    { name: '달리는 말 시점', targetName: 'body' }, // 말의 몸체
-    { name: '자동차 시점', targetName: 'Mesh123' }, // 자동차 메인 메쉬
-    { name: '달리는 사람 시점', targetName: 'baseMesh1' }, // 사람 베이스 메쉬
-    { name: '자전거 시점', targetName: 'Wheel_A' }, // 자전거 바퀴
+    { name: '달리는 말 시점', targetName: 'Mesh123' }, // 말의 몸체
+    { name: '자동차 시점', targetName: 'Wheel_A' }, // 자동차 메인 메쉬
+    { name: '달리는 사람 시점', targetName: 'female_genericMesh2' }, // 사람 베이스 메쉬
+    { name: '자전거 시점', targetName: 'Male_Head' }, // 자전거 바퀴
     { name: '기차 시점', targetName: 'bridge' }, // 기차 브릿지/본체
+  ]
+
+  const presetOffsets = [
+    // UI 조정 기능 제거됨 - 이제 코드에서 직접 설정
   ]
 
   return (
     <div className="w-screen h-screen bg-white relative">
       {/* 컨트롤 패널 */}
-      <div className="absolute top-4 left-4 z-10 space-y-2">
+      <div className="absolute top-4 right-4 z-10 space-y-2 bg-white/90 p-4 rounded-lg shadow-lg max-w-xs">
         <button
           onClick={handleStartAnimation}
           disabled={isAnimationPlaying}
-          className={`px-4 py-2 rounded-lg font-medium transition-all ${
+          className={`w-full px-4 py-2 rounded-lg font-medium transition-all ${
             isAnimationPlaying
               ? 'bg-green-500 text-white cursor-not-allowed'
               : 'bg-blue-500 hover:bg-blue-600 text-white'
           }`}
         >
-          {isAnimationPlaying ? '애니메이션 재생 중' : '시작하기'}
+          {isAnimationPlaying ? '속도 관찰' : '시작하기'}
         </button>
         
         {isAnimationPlaying && (
-          <div className="space-y-1">
-            {viewButtons.map((button, idx) => (
+          <>
+            <div className="space-y-1">
+              {viewButtons.map((button, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleViewChange(button.targetName)}
+                  className={`block w-full px-4 py-2 rounded-lg font-medium transition-all ${
+                    currentView === button.targetName
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                  }`}
+                >
+                  {button.name}
+                </button>
+              ))}
+              
               <button
-                key={idx}
-                onClick={() => handleViewChange(button.targetName)}
-                className={`block w-full px-4 py-2 rounded-lg font-medium transition-all ${
-                  currentView === button.targetName
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
-                }`}
+                onClick={handleResetView}
+                className="block w-full px-4 py-2 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition-all"
               >
-                {button.name}
+                자유 시점
               </button>
-            ))}
-            
-            <button
-              onClick={handleResetView}
-              className="block w-full px-4 py-2 rounded-lg font-medium bg-gray-500 hover:bg-gray-600 text-white transition-all"
-            >
-              자유 시점
-            </button>
-          </div>
+            </div>
+
+            {/* 카메라 오프셋 조정 패널 제거됨 - 이제 코드에서 직접 설정 */}
+          </>
         )}
       </div>
 
       <Scene 
-        camera={{ position: [0, 1, 3], fov: 50 }}
+        camera={{ position: [16, 3, 20], fov: 50 }}
         shadows="soft"
       >
         <ambientLight intensity={0.2} />
@@ -193,15 +209,7 @@ export default function Home() {
           <Model 
             scale={1} 
             position={[0, 0, 0]} 
-            animationSpeed={isAnimationPlaying ? 0.1 : 0}
-            castShadow={true}
-            receiveShadow={true}
-          />
-          
-          <Model 
-            scale={0.8} 
-            position={[2, 0, 1]} 
-            animationSpeed={isAnimationPlaying ? 0.05 : 0}
+            animationSpeed={isAnimationPlaying ? 0.4 : 0}
             castShadow={true}
             receiveShadow={true}
           />
@@ -224,6 +232,9 @@ export default function Home() {
           mieDirectionalG={0.85}
         />
         <Environment preset={'apartment'} />
+       <EffectComposer>
+          <LensFlare dirtTextureFile={"/models/5-2-3/coast.png"} />
+        </EffectComposer>
       </Scene>
     </div>
   )

@@ -20,15 +20,16 @@ export default function Model({
   const { actions } = useAnimations(animations, group)
 
   useEffect(() => {
-    // 애니메이션 속도가 0이면 정지, 아니면 재생
     if (actions) {
       Object.values(actions).forEach((action) => {
         if (action) {
           if (animationSpeed === 0) {
-            action.paused = true
+            action.time = 0 
+            action.paused = true 
+            action.play() 
           } else {
             action.paused = false
-            action.timeScale = animationSpeed
+            action.timeScale = animationSpeed  
             action.play()
           }
         }
